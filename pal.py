@@ -56,7 +56,7 @@ class Pal16R4Base:
         self.i9 = (val >> 7) & 1
 
     @property
-    def _inputs_as_byte(self) -> int:
+    def inputs_as_byte(self) -> int:
         return (
             (self.i2 << 0)
             | (self.i3 << 1)
@@ -69,7 +69,7 @@ class Pal16R4Base:
         )
 
     @property
-    def _outputs_as_byte(self) -> int:
+    def outputs_as_byte(self) -> int:
         return (
             (self.io18 << 0)
             | (self.o17 << 1)
@@ -126,7 +126,7 @@ class Pal16R4DuPAL(Pal16R4Base):
         self.io12 = (val >> 7) & 1
 
     def clock(self):
-        inputs = self._inputs_as_byte
+        inputs = self.inputs_as_byte
         self.client.write_status((inputs << 1) | 1)  # with clock bit
         self.client.write_status(inputs << 1)  # no clock bit
 
@@ -152,10 +152,10 @@ class Pal16R4IC12(Pal16R4Base):
         self.io19 = 1
 
         # registers
-        self.o14 = 0
+        self.o14 = 1
         self.o15 = 1
         self.o16 = 1
-        self.o17 = 0
+        self.o17 = 1
 
     def read_outputs(self, outputs: Optional[int] = None):
         i2 = self.i2
@@ -345,10 +345,16 @@ class Pal16R4IC12(Pal16R4Base):
             )
         )
 
-        print(f"io19 {self.io19} : {new_io19}")
-        print(f"io18 {self.io18} : {new_io18}")
-        print(f"io13 {self.io13} : {new_io13}")
-        print(f"io12 {self.io12} : {new_io12}")
-        print(
-            f"{i2}{i3}{i4}{i5}{i6}{i7}{i8}{i9}{fio18}{fio13}{fio19}{fio12}{psro17}{psro16}{psro15}{psro14}"
-        )
+        if outputs:
+            print(f"io19 {self.io19} : {new_io19}")
+            print(f"io18 {self.io18} : {new_io18}")
+            print(f"io13 {self.io13} : {new_io13}")
+            print(f"io12 {self.io12} : {new_io12}")
+            print(
+                f"{i2}{i3}{i4}{i5}{i6}{i7}{i8}{i9}{fio18}{fio13}{fio19}{fio12}{psro17}{psro16}{psro15}{psro14}"
+            )
+        else:
+            self.io18 = new_io18
+            self.io13 = new_io13
+            self.io19 = new_io19
+            self.io12 = new_io12

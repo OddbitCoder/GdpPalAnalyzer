@@ -1,6 +1,7 @@
 import random
 import time
 
+from analyzer import analyze
 from pal import Pal16R4DuPAL, Pal16R4IC12
 
 #
@@ -21,19 +22,25 @@ from pal import Pal16R4DuPAL, Pal16R4IC12
 #         time.sleep(0.1)
 #         file.flush()
 
-pal = Pal16R4IC12()
+# pal = Pal16R4IC12()
 
-print(pal)
+# print(pal)
 
-with open("C:\\Work\\pal_tester\\output.txt", "r") as file:
-    lines = file.readlines()
+# with open("C:\\Work\\pal_tester\\output.txt", "r") as file:
+#     lines = file.readlines()
+#
+# for inputs, outputs in zip(lines[0::2], lines[1::2]):
+#     if inputs == "Clock\n":
+#         pal.clock()
+#         print("Clock")
+#     else:
+#         pal.set_inputs(int(inputs))
+#         print(f"inputs: {int(inputs)}")
+#     pal.read_outputs(outputs=int(outputs))
+#     print(pal)
 
-for inputs, outputs in zip(lines[0::2], lines[1::2]):
-    if inputs == "Clock\n":
-        pal.clock()
-        print("Clock")
-    else:
-        pal.set_inputs(int(inputs))
-        print(f"inputs: {int(inputs)}")
-    pal.read_outputs(outputs=int(outputs))
+done = False
+while not done:
+    pal = Pal16R4IC12()
     print(pal)
+    done = analyze(pal)
