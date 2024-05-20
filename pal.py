@@ -81,14 +81,15 @@ class Pal16R4Base:
             | (self.io12 << 7)
         )
 
-    def read_outputs(self):
+    def read_outputs(self) -> int:
         raise NotImplementedError
 
-    def clock(self):
+    def clock(self) -> int:
         self.o17 = self.ro17
         self.o16 = self.ro16
         self.o15 = self.ro15
         self.o14 = self.ro14
+        return self.outputs_as_byte
 
 
 class Pal16R4DuPAL(Pal16R4Base):
@@ -101,7 +102,6 @@ class Pal16R4DuPAL(Pal16R4Base):
         self.client.receive_response()  # empty line
         self.client.receive_response()  # "REMOTE_CONTROL_ENABLED"
         self.client.control_led(1, 1)
-        self._outputs = 0
 
     def _reset_board(self):
         serial = self.client.serial
@@ -114,7 +114,7 @@ class Pal16R4DuPAL(Pal16R4Base):
         super().set_inputs(val)
         self.client.write_status(val << 1)
 
-    def read_outputs(self):
+    def read_outputs(self) -> int:
         val = self.client.read_status()
         self.io18 = (val >> 0) & 1
         self.o17 = (val >> 1) & 1
@@ -124,11 +124,13 @@ class Pal16R4DuPAL(Pal16R4Base):
         self.io13 = (val >> 5) & 1
         self.io19 = (val >> 6) & 1
         self.io12 = (val >> 7) & 1
+        return self.outputs_as_byte
 
-    def clock(self):
+    def clock(self) -> int:
         inputs = self.inputs_as_byte
         self.client.write_status((inputs << 1) | 1)  # with clock bit
         self.client.write_status(inputs << 1)  # no clock bit
+        return self.outputs_as_byte
 
 
 class Pal16R4IC12(Pal16R4Base):
@@ -358,3 +360,5 @@ class Pal16R4IC12(Pal16R4Base):
             self.io13 = new_io13
             self.io19 = new_io19
             self.io12 = new_io12
+
+        return self.outputs_as_byte

@@ -43,4 +43,4 @@ done = False
 while not done:
     pal = Pal16R4IC12()
     print(pal)
-    done = analyze(pal)
+    done = analyze(pal, set_one_mask=0b00000000)
