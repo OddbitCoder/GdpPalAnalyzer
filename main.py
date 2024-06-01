@@ -1,7 +1,10 @@
+import json
 import random
 import time
 
-from analyzer import analyze
+import usb_relay
+
+from analyzer import analyze, nodes
 from pal import Pal16R4DuPAL, Pal16R4IC12
 
 #
@@ -44,3 +47,18 @@ while not done:
     pal = Pal16R4IC12()
     print(pal)
     done = analyze(pal, set_one_mask=0b00000000)
+    print(json.dumps(nodes, default=lambda o: o.__dict__))
+
+
+
+# handle, devices = usb_relay.initialize_relay_device()
+#
+# usb_relay.relay_on(handle, channel=1)
+# usb_relay.relay_on(handle, channel=2)
+#
+# time.sleep(100)
+#
+# usb_relay.relay_off(handle, channel=1)
+# usb_relay.relay_off(handle, channel=2)
+#
+# usb_relay.finalize_relay_device(handle, devices)
