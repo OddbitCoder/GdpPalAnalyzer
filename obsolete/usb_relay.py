@@ -114,10 +114,14 @@ def finalize_relay_device(handle, devices):
 def relay_on(handle, channel=1):
     result = usb_relay_device_open_one_relay_channel(handle, channel)
     if result != 0:
-        raise Exception(f"Failed to turn on relay channel {channel}, error code: {result}")
+        raise Exception(
+            f"Failed to turn on relay channel {channel}, error code: {result}"
+        )
 
 
 def relay_off(handle, channel=1):
     result = usb_relay_device_close_one_relay_channel(handle, channel)
     if result != 0:
-        raise Exception(f"Failed to turn off relay channel {channel}, error code: {result}")
+        raise Exception(
+            f"Failed to turn off relay channel {channel}, error code: {result}"
+        )

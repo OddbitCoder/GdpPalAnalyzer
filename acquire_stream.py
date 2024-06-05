@@ -1,19 +1,29 @@
+import random
+
 from pal import Pal16R4DuPAL
 
 pal = Pal16R4DuPAL(port="COM5")
+pal.set_inputs(0)
+prev_outputs = pal.read_outputs()
 # open file for writing
-with open("stream_no_clock.txt", "w") as file:
+with open("./reads/ic12/ic12_random_stream.txt", "w") as file:
     while True:
-        if False:  # random.randint(0, 3) == 0:
+        if random.randint(0, 3) == 0:
+            inputs = "clock"
             pal.clock()
-            file.write("Clock\n")
         else:
             inputs = random.randint(0, 255)
-            inputs = inputs | 0b10000000
-            file.write(f"{str(inputs)}\n")
             pal.set_inputs(inputs)
         pal.read_outputs()
-        file.write(f"{str(pal.outputs_as_byte)}\n")
-        print(pal)
-        time.sleep(0.1)
+        file.write(f"{prev_outputs} -> {inputs} -> {pal.outputs_as_byte}\n")
+        outputs_str = f"{int(pal.outputs_as_byte):08b}"
+        if inputs != "clock":
+            file.write(
+                f"{prev_outputs:08b}{int(inputs):08b} -> {outputs_str[:3]}({outputs_str[3:7]}){outputs_str[7:]}\n"
+            )
+        else:
+            file.write(
+                f"clock -> {outputs_str[:3]}({outputs_str[3:7]}){outputs_str[7:]}\n"
+            )
+        prev_outputs = pal.outputs_as_byte
         file.flush()
