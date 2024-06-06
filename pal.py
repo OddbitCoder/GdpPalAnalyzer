@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 from dupal_client import DuPALClient
 
@@ -24,25 +25,25 @@ class Pal16R4Base:
         self.io18: int = 0
         self.io19: int = 0
         # inputs into registers
-        self.ro14: int = 0
-        self.ro15: int = 0
-        self.ro16: int = 0
-        self.ro17: int = 0
+        self.ro14: Optional[int] = None
+        self.ro15: Optional[int] = None
+        self.ro16: Optional[int] = None
+        self.ro17: Optional[int] = None
 
     def __str__(self):
         return (
-            f"            +-----U-----+\n"
-            f"        clk |1        20| vcc\n"
-            f"     i2 ({self.i2}) |2        19| io19 ({self.io19})\n"
-            f"     i3 ({self.i3}) |3        18| io18 ({self.io18})\n"
-            f"     i4 ({self.i4}) |4        17| ro17 ({self.ro17}) --REG-- o17 ({self.o17})\n"
-            f"     i5 ({self.i5}) |5  PAL   16| ro16 ({self.ro16}) --REG-- o16 ({self.o16})\n"
-            f"     i6 ({self.i6}) |6  16R4  15| ro15 ({self.ro15}) --REG-- o15 ({self.o15})\n"
-            f"     i7 ({self.i7}) |7        14| ro14 ({self.ro14}) --REG-- o14 ({self.o14})\n"
-            f"     i8 ({self.i8}) |8        13| io13 ({self.io13})\n"
-            f"     i9 ({self.i9}) |9        12| io12 ({self.io12})\n"
-            f"        gnd |10       11| oe\n"
-            f"            +-----------+\n"
+            f"             +-----_-----+\n"
+            f"        clk -|1        20|- vcc\n"
+            f"     i2 ({self.i2}) -|2        19|- io19 ({self.io19})\n"
+            f"     i3 ({self.i3}) -|3        18|- io18 ({self.io18})\n"
+            f"     i4 ({self.i4}) -|4        17|  ro17 ({self.ro17 if self.ro17 is not None else '?'}) - o17 ({self.o17})\n"
+            f"     i5 ({self.i5}) -|5  PAL   16|  ro16 ({self.ro16 if self.ro16 is not None else '?'}) - o16 ({self.o16})\n"
+            f"     i6 ({self.i6}) -|6  16R4  15|  ro15 ({self.ro15 if self.ro15 is not None else '?'}) - o15 ({self.o15})\n"
+            f"     i7 ({self.i7}) -|7        14|  ro14 ({self.ro14 if self.ro14 is not None else '?'}) - o14 ({self.o14})\n"
+            f"     i8 ({self.i8}) -|8        13|- io13 ({self.io13})\n"
+            f"     i9 ({self.i9}) -|9        12|- io12 ({self.io12})\n"
+            f"        gnd -|10       11|- oe\n"
+            f"             +-----------+\n"
         )
 
     def set_inputs(self, val: int):
