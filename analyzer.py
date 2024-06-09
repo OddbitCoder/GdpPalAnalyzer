@@ -45,8 +45,12 @@ class PalAnalyzer:
     ) -> tuple[Optional[Node], list[int]]:
         return self._find_path(start_node, self._is_incomplete)
 
-    def find_path_between_nodes(self, start_node: Node, end_node: Node) -> tuple[Optional[Node], list[int]]:
-        return self._find_path(start_node, lambda node: node.outputs == end_node.outputs)
+    def find_path_between_nodes(
+        self, start_node: Node, end_node: Node
+    ) -> tuple[Optional[Node], list[int]]:
+        return self._find_path(
+            start_node, lambda node: node.outputs == end_node.outputs
+        )
 
     def _find_path(
         self, start_node: Node, node_condition: Callable[[Node], bool]
@@ -172,6 +176,13 @@ class PalAnalyzer:
     def _create_table_entry(file, feedbacks: int, inputs: int, outputs: int):
         file.write(f"{feedbacks:08b}{inputs:08b} {outputs:08b}\n")
 
+    def _get_child_node(self, node: Node, inputs: int, clock: bool = False):
+        if clock:
+            node_id = [o for i, o in node.clock_outlinks if inputs == i][0]
+        else:
+            node_id = [o for i, o in node.outlinks if inputs == i][0]
+        return self._nodes[node_id]
+
     def export_table(self, file_name: str):
         tabu = {}
         with open(file_name, "w", encoding="utf-8") as file:
@@ -187,55 +198,82 @@ class PalAnalyzer:
                 for inputs, child_node_id in node.outlinks:
                     child_node = self._nodes[child_node_id]
                     # here we have: node --inputs--> child_node
-                    reg_inputs_list = [o for i, o in node.clock_outlinks if inputs == i]
-                    if not reg_inputs_list:
-                        print(f"WARNING: Cannot find the clock outlink!")
+                    clock_node = self._get_child_node(node, inputs, True)
+                    # assertion 1: child_node --inputs--> child_node
+                    should_be_child_node = self._get_child_node(child_node, inputs)
+                    if should_be_child_node.outputs != child_node_id:
+                        print("WARNING: Child node is not connected to itself!")
+                        print(f"Node: {node.outputs}")
+                        print(f"Child node: {child_node_id}")
+                        print(f"Inputs: {inputs}")
+                        print(f"Child node connects to: {should_be_child_node.outputs}")
+                    # assertion 2: child_node --inputs+clock--> clock_node
+                    should_be_clock_node = self._get_child_node(
+                        child_node, inputs, True
+                    )
+                    if should_be_clock_node.outputs != clock_node.outputs:
+                        print("WARNING: Child node is not connected to clock node!")
+                        print(f"Node: {node.outputs}")
+                        print(f"Child node: {child_node_id}")
+                        print(f"Clock node: {clock_node.outputs}")
+                        print(f"Inputs: {inputs}")
+                        print(f"Child node connects to: {should_be_clock_node.outputs}")
+                    reg_inputs = clock_node.outputs & 0b00011110
+                    # CLOCK TRANSITION:
+                    if node == child_node:
+                        key = f"{((node.outputs & 0b11100001) + reg_inputs):08b}{inputs:08b}"
+                        clock_node_child = self._get_child_node(
+                            clock_node, inputs, True
+                        )
+                        outputs = (clock_node.outputs & 0b11100001) + (
+                            clock_node_child.outputs & 0b00011110
+                        )
+                        if key in tabu:
+                            if tabu[key] != outputs:
+                                print(
+                                    f"WARNING: Entry already exists but with different outputs: {key} -> {tabu[key]:08b} instead of {outputs:08b} [1]"
+                                )
+                        else:
+                            self._create_table_entry(
+                                file,
+                                (node.outputs & 0b11100001) + reg_inputs,
+                                inputs,
+                                outputs,
+                            )
+                            tabu[key] = outputs
+                    # NO-CLOCK TRANSITION START STATE:
+                    # inputs: node.outputs feedbacks, inputs
+                    # outputs: child_node.outputs (input into registers from node.clock_outlinks)
+                    key = f"{node.outputs:08b}{inputs:08b}"
+                    outputs = (child_node.outputs & 0b11100001) + reg_inputs
+                    if key in tabu:
+                        if tabu[key] != outputs:
+                            print(
+                                f"WARNING: Entry already exists but with different outputs: {key} -> {tabu[key]:08b} instead of {outputs:08b} [2]"
+                            )
                     else:
-                        # check: child_node --inputs--> child_node
-                        should_be_child_node_id = [
-                            o for i, o in child_node.outlinks if inputs == i
-                        ][0]
-                        if should_be_child_node_id != child_node_id:
-                            print("WARNING: Child node is not connected to itself!")
-                            print(f"Node: {node.outputs}")
-                            print(f"Child node: {child_node_id}")
-                            print(f"Inputs: {inputs}")
-                            print(f"Child node connects to: {should_be_child_node_id}")
-                        clock_node = self._nodes[reg_inputs_list[0]]
-                        reg_inputs = clock_node.outputs & 0b00011110
-                        # START STATE:
-                        # inputs: node.outputs feedbacks, inputs
-                        # outputs: child_node.outputs (input into registers from node.clock_outlinks)
-                        key = f"{node.outputs:08b}{inputs:08b}"
-                        outputs = (child_node.outputs & 0b11100001) + reg_inputs
-                        if key in tabu:
-                            if tabu[key] != outputs:
-                                print(
-                                    f"WARNING: Entry already exists but with different outputs: {key} -> {tabu[key]:08b} instead of {outputs:08b}"
-                                )
-                        else:
-                            self._create_table_entry(
-                                file,
-                                node.outputs,
-                                inputs,
-                                outputs,
+                        self._create_table_entry(
+                            file,
+                            node.outputs,
+                            inputs,
+                            outputs,
+                        )
+                        tabu[key] = outputs
+                    # NO-CLOCK TRANSITION END STATE:
+                    # inputs: child_node.outputs feedbacks, inputs
+                    # outputs: child_node.outputs (input into registers from node.clock_outlinks)
+                    key = f"{child_node.outputs:08b}{inputs:08b}"
+                    outputs = (child_node.outputs & 0b11100001) + reg_inputs
+                    if key in tabu:
+                        if tabu[key] != outputs:
+                            print(
+                                f"WARNING: Entry already exists but with different outputs: {key} -> {tabu[key]:08b} instead of {outputs:08b} [3]"
                             )
-                            tabu[key] = outputs
-                        # END STATE:
-                        # inputs: child_node.outputs feedbacks, inputs
-                        # outputs: child_node.outputs (input into registers from node.clock_outlinks)
-                        key = f"{child_node.outputs:08b}{inputs:08b}"
-                        outputs = (child_node.outputs & 0b11100001) + reg_inputs
-                        if key in tabu:
-                            if tabu[key] != outputs:
-                                print(
-                                    f"WARNING: Entry already exists but with different outputs: {key} -> {tabu[key]:08b} instead of {outputs:08b}"
-                                )
-                        else:
-                            self._create_table_entry(
-                                file,
-                                child_node.outputs,
-                                inputs,
-                                outputs,
-                            )
-                            tabu[key] = outputs
+                    else:
+                        self._create_table_entry(
+                            file,
+                            child_node.outputs,
+                            inputs,
+                            outputs,
+                        )
+                        tabu[key] = outputs

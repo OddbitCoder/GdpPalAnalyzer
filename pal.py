@@ -103,6 +103,7 @@ class Pal16R4DuPAL(Pal16R4Base):
         self.client.receive_response()  # empty line
         self.client.receive_response()  # "REMOTE_CONTROL_ENABLED"
         self.client.control_led(1, 1)
+        self.read_outputs()
 
     def _reset_board(self):
         serial = self.client.serial
