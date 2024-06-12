@@ -186,7 +186,7 @@ class PalAnalyzer:
     def export_table(self, file_name: str):
         tabu = {}
         with open(file_name, "w", encoding="utf-8") as file:
-            file.write("# PAL1R4\n")
+            file.write("# PAL16R4\n")
             file.write(".i 16\n")
             file.write(".o 8\n")
             file.write(

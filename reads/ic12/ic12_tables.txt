@@ -1,4 +1,4 @@
-# PAL1R4
+# PAL16R4
 .i 16
 .o 8
 .ilb fio12 fio19 fio13 r14 r15 r16 r17 fio18 i9 i8 i7 i6 i5 i4 i3 i2
