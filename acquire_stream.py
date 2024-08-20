@@ -2,11 +2,11 @@ import random
 
 from pal import Pal16R4DuPAL
 
-pal = Pal16R4DuPAL(port="COM5")
+pal = Pal16R4DuPAL(port="COM4")
 pal.set_inputs(0)
 prev_outputs = pal.read_outputs()
 # open file for writing
-with open("./reads/ic12/ic12_random_stream.txt", "w") as file:
+with open("./reads/ic49/ic49_random_stream.txt", "w") as file:
     while True:
         if random.randint(0, 3) == 0:
             inputs = "clock"

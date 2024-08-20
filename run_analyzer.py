@@ -3,8 +3,8 @@ from pal import Pal16R4DuPAL
 
 analyzer = PalAnalyzer()
 
-pal = Pal16R4DuPAL("COM5")
+pal = Pal16R4DuPAL("COM4")
 
 analyzer.analyze(pal)
 
-analyzer.save_to_file("./reads/ic12/ic12_full_read.json")
+analyzer.save_to_file("./reads/ic49/ic49_full_read_2.json")

@@ -2,6 +2,6 @@ from analyzer import PalAnalyzer
 
 analyzer = PalAnalyzer()
 
-analyzer.read_from_file("./reads/ic12/ic12_full_read.json")
+analyzer.read_from_file("./reads/ic49/ic49_full_read.json")
 
-analyzer.export_table("./reads/ic12/ic12_tables.txt")
+analyzer.export_table("./reads/ic49/ic49_tables.txt")

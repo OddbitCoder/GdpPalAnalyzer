@@ -18,8 +18,6 @@ class IC12(Pal16R4Base):
         self.o16 = 1
         self.o17 = 1
 
-        # self.prev_outputs = self.outputs_as_byte
-
     def read_outputs(self) -> int:
         i2 = self.i2
         i3 = self.i3
@@ -37,8 +35,6 @@ class IC12(Pal16R4Base):
         r15 = self.o15
         r16 = self.o16
         r17 = self.o17
-
-        # self.prev_outputs = self.outputs_as_byte
 
         self.io12 = int(
             not (
@@ -356,9 +352,3 @@ class IC12(Pal16R4Base):
         )
 
         return self.outputs_as_byte
-
-    # def __str__(self):
-    #     _str = super().__str__()
-    #     outputs = f"{self.outputs_as_byte:08b}"
-    #     _str += f"{self.prev_outputs:08b}{self.inputs_as_byte:08b} -> {outputs[:3]}({outputs[3:7]}){outputs[7:]}\n"
-    #     return _str
