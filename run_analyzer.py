@@ -5,6 +5,6 @@ analyzer = PalAnalyzer()
 
 pal = Pal16R4DuPAL("COM4")
 
-analyzer.analyze(pal)
+analyzer.analyze(pal, output_mask=0b1100)
 
-analyzer.save_to_file("./reads/ic49/ic49_full_read_2.json")
+analyzer.save_to_file("./reads/ic49/ic49_full_read.json")

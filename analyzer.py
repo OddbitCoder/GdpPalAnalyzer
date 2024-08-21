@@ -29,15 +29,18 @@ class PalAnalyzer:
         num_inputs = len(self._possible_inputs)
         return len(node.outlinks) < num_inputs or len(node.clock_outlinks) < num_inputs
 
-    def _set_possible_inputs(self, set_zero_mask: int, set_one_mask: int):
+    # output mask: pins 19, 18, 13, 12
+    def _set_possible_inputs(self, set_zero_mask: int, set_one_mask: int, output_mask: int):
         self._possible_inputs = []
-        for num in range(256):
-            if (num & set_zero_mask == 0) and (num | set_one_mask == num):
+        for num in range(0b1111_11111111):
+            if (num & set_zero_mask == 0) and (num | set_one_mask == num) and (num & (output_mask << 8) == 0):
                 self._possible_inputs.append(num)
+        print(f"Number of possible inputs: {len(self._possible_inputs)}")
 
     def _get_or_create_node(self, outputs: int) -> Node:
         if outputs not in self._nodes:
             self._nodes[outputs] = Node(outputs, outlinks=[], clock_outlinks=[])
+            print("*", end="")
         return self._nodes[outputs]
 
     def _find_incomplete_node(
@@ -91,14 +94,15 @@ class PalAnalyzer:
                 pal.set_inputs(inputs)
 
     def analyze(
-        self, pal: Pal16R4Base, set_zero_mask: int = 0, set_one_mask: int = 0
+        self, pal: Pal16R4Base, set_zero_mask: int = 0, set_one_mask: int = 0, output_mask: int = 0b1111
     ) -> bool:
-        self._set_possible_inputs(set_zero_mask, set_one_mask)
+        self._set_possible_inputs(set_zero_mask, set_one_mask, output_mask)
         outputs = pal.read_outputs()
         node = self._get_or_create_node(outputs)
         while True:
             # can we create outlink?
             if len(node.outlinks) < len(self._possible_inputs):
+                print(".", end="")
                 inputs = self._possible_inputs[node.next_inputs_idx]
                 pal.set_inputs(inputs)
                 outputs = pal.read_outputs()
@@ -109,6 +113,7 @@ class PalAnalyzer:
             elif len(node.clock_outlinks) < len(
                 self._possible_inputs
             ):  # should we trigger clock?
+                print(":", end="")
                 inputs = self._possible_inputs[node.next_clock_inputs_idx]
                 pal.set_inputs(inputs)
                 pal.clock()
@@ -123,6 +128,7 @@ class PalAnalyzer:
                 node, path = self._find_incomplete_node(start_node)
                 assert not node or self._is_incomplete(node), "We found a complete node"
                 if node:
+                    print("W", end="")
                     self._walk_to(pal, path)
                     self._path_cache[start_node.outputs] = (node, path)
                     assert self._is_incomplete(node), "We walked into a complete node"
@@ -183,6 +189,7 @@ class PalAnalyzer:
             node_id = [o for i, o in node.outlinks if inputs == i][0]
         return self._nodes[node_id]
 
+    # TODO: needs to be adjusted to take the output mask into account
     def export_table(self, file_name: str):
         tabu = {}
         with open(file_name, "w", encoding="utf-8") as file:
