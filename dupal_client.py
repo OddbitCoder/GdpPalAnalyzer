@@ -10,7 +10,7 @@ class DuPALClient:
 
     def send_command(self, command: str) -> str:
         self.serial.write(command.encode())
-        time.sleep(0.1)  # Allow some time for the response
+        time.sleep(0.01)  # Allow some time for the response
         return self.receive_response()
 
     def receive_response(self) -> str:
