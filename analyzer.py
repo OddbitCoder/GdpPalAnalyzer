@@ -20,20 +20,21 @@ class Node:
 
 
 class PalAnalyzer:
-    def __init__(self):
+    def __init__(self, pal: Pal16R4Base):
         self._possible_inputs: list[int] = []
         self._nodes: dict[int, Node] = {}
         self._path_cache: dict[int, tuple[Node, list[int]]] = {}
+        self._pal = pal
 
     def _is_incomplete(self, node: Node) -> bool:
         num_inputs = len(self._possible_inputs)
         return len(node.outlinks) < num_inputs or len(node.clock_outlinks) < num_inputs
 
     # output mask: pins 19, 18, 13, 12
-    def _set_possible_inputs(self, set_zero_mask: int, set_one_mask: int, output_mask: int):
+    def _set_possible_inputs(self, set_zero_mask: int, set_one_mask: int):
         self._possible_inputs = []
         for num in range(0b1111_11111111):
-            if (num & set_zero_mask == 0) and (num | set_one_mask == num) and (num & (output_mask << 8) == 0):
+            if (num & set_zero_mask == 0) and (num | set_one_mask == num) and (num & (self._pal.output_mask << 8) == 0):
                 self._possible_inputs.append(num)
         print(f"Number of possible inputs: {len(self._possible_inputs)}")
 
@@ -84,19 +85,19 @@ class PalAnalyzer:
 
         return None, []
 
-    @staticmethod
-    def _walk_to(pal: Pal16R4Base, path: list[int]):
+    def _walk_to(self, path: list[int]):
         for inputs in path:
             if inputs < 0:
-                pal.set_inputs(-inputs - 1)
-                pal.clock()
+                self._pal.set_inputs(-inputs - 1)
+                self._pal.clock()
             else:
-                pal.set_inputs(inputs)
+                self._pal.set_inputs(inputs)
 
     def analyze(
-        self, pal: Pal16R4Base, set_zero_mask: int = 0, set_one_mask: int = 0, output_mask: int = 0b1111
+        self, set_zero_mask: int = 0, set_one_mask: int = 0
     ) -> bool:
-        self._set_possible_inputs(set_zero_mask, set_one_mask, output_mask)
+        pal = self._pal
+        self._set_possible_inputs(set_zero_mask, set_one_mask)
         outputs = pal.read_outputs()
         node = self._get_or_create_node(outputs)
         while True:
@@ -129,7 +130,7 @@ class PalAnalyzer:
                 assert not node or self._is_incomplete(node), "We found a complete node"
                 if node:
                     print("W", end="")
-                    self._walk_to(pal, path)
+                    self._walk_to(path)
                     self._path_cache[start_node.outputs] = (node, path)
                     assert self._is_incomplete(node), "We walked into a complete node"
                 else:  # can't find any incomplete node
@@ -178,9 +179,10 @@ class PalAnalyzer:
             self._nodes = {int(k): self._create_node(v) for k, v in _nodes.items()}
             print(f"Loaded {len(_nodes)} nodes from file")
 
-    @staticmethod
-    def _create_table_entry(file, feedbacks: int, inputs: int, outputs: int):
-        file.write(f"{feedbacks:08b}{inputs:08b} {outputs:08b}\n")
+    def _create_table_entry(self, file, feedbacks: int, inputs: int, outputs: int):
+        out_bits = f"{outputs:08b}"
+        pal = self._pal
+        file.write(f"{feedbacks:08b}_{f'{inputs:012b}'} {out_bits[0] if not pal.i12 else ''}{out_bits[1] if not pal.i19 else ''}{out_bits[2] if not pal.i13 else ''}{out_bits[3]}{out_bits[4]}{out_bits[5]}{out_bits[6]}{out_bits[7] if not pal.i18 else ''}\n")
 
     def _get_child_node(self, node: Node, inputs: int, clock: bool = False):
         if clock:
@@ -189,18 +191,19 @@ class PalAnalyzer:
             node_id = [o for i, o in node.outlinks if inputs == i][0]
         return self._nodes[node_id]
 
-    # TODO: needs to be adjusted to take the output mask into account
     def export_table(self, file_name: str):
         tabu = {}
+        pal = self._pal
+        out_count = (4 - sum([pal.i12, pal.i13, pal.i18, pal.i19])) + 4
         with open(file_name, "w", encoding="utf-8") as file:
             file.write("# PAL16R4\n")
             file.write(".i 16\n")
-            file.write(".o 8\n")
+            file.write(f".o {out_count}\n")
             file.write(
                 ".ilb fio12 fio19 fio13 r14 r15 r16 r17 fio18 i9 i8 i7 i6 i5 i4 i3 i2\n"
             )
-            file.write(".ob io12 io19 io13 ir14 ir15 ir16 ir17 io18\n")
-            file.write(".phase 00000000\n")
+            file.write(f".ob{' io12' if not pal.i12 else ''}{' io19' if not pal.i19 else ''}{' io13' if not pal.i13 else ''} ir14 ir15 ir16 ir17{' io18' if not pal.i18 else ''}\n")
+            file.write(f".phase {'0' * out_count}\n")
             for node in self._nodes.values():
                 for inputs, child_node_id in node.outlinks:
                     child_node = self._nodes[child_node_id]
@@ -228,7 +231,7 @@ class PalAnalyzer:
                     reg_inputs = clock_node.outputs & 0b00011110
                     # CLOCK TRANSITION:
                     if node == child_node:
-                        key = f"{((node.outputs & 0b11100001) + reg_inputs):08b}{inputs:08b}"
+                        key = f"{((node.outputs & 0b11100001) + reg_inputs):08b}_{inputs:012b}"
                         clock_node_child = self._get_child_node(
                             clock_node, inputs, True
                         )
@@ -251,7 +254,7 @@ class PalAnalyzer:
                     # NO-CLOCK TRANSITION START STATE:
                     # inputs: node.outputs feedbacks, inputs
                     # outputs: child_node.outputs (input into registers from node.clock_outlinks)
-                    key = f"{node.outputs:08b}{inputs:08b}"
+                    key = f"{node.outputs:08b}_{inputs:012b}"
                     outputs = (child_node.outputs & 0b11100001) + reg_inputs
                     if key in tabu:
                         if tabu[key] != outputs:
@@ -269,7 +272,7 @@ class PalAnalyzer:
                     # NO-CLOCK TRANSITION END STATE:
                     # inputs: child_node.outputs feedbacks, inputs
                     # outputs: child_node.outputs (input into registers from node.clock_outlinks)
-                    key = f"{child_node.outputs:08b}{inputs:08b}"
+                    key = f"{child_node.outputs:08b}_{inputs:012b}"
                     outputs = (child_node.outputs & 0b11100001) + reg_inputs
                     if key in tabu:
                         if tabu[key] != outputs:

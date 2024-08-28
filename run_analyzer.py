@@ -1,10 +1,8 @@
 from analyzer import PalAnalyzer
 from pal import Pal16R4DuPAL
 
-analyzer = PalAnalyzer()
+analyzer = PalAnalyzer(Pal16R4DuPAL("COM4", output_mask=0b1100))
 
-pal = Pal16R4DuPAL("COM4")
+analyzer.analyze()
 
-analyzer.analyze(pal, output_mask=0b1100)
-
-analyzer.save_to_file("./reads/ic49/ic49_full_read.json")
+analyzer.save_to_file("./reads/ic49/ic49_full_read_3.json")

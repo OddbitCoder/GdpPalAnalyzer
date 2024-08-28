@@ -5,16 +5,30 @@ from typing import Optional
 
 
 class DuPALClient:
-    def __init__(self, port: str):
-        self.serial = serial.Serial(port, baudrate=57600)
+    def __init__(self, port: str, sleep_time: float = 0.01):
+        self._serial = serial.Serial(port, baudrate=57600)
+        self._sleep_time = sleep_time
+
+    def init_board(self):
+        self.reset_board()
+        self.send_command("x")
+        self.receive_response()  # "DuPAL - 0.1.2"
+        self.receive_response()  # empty line
+        self.receive_response()  # "REMOTE_CONTROL_ENABLED"
+
+    def reset_board(self):
+        if self._serial.is_open:
+            self._serial.dtr = True
+            time.sleep(1)
+            self._serial.dtr = False
 
     def send_command(self, command: str) -> str:
-        self.serial.write(command.encode())
-        time.sleep(0.01)  # Allow some time for the response
+        self._serial.write(command.encode())
+        time.sleep(self._sleep_time)  # Allow some time for the response
         return self.receive_response()
 
     def receive_response(self) -> str:
-        response: str = self.serial.read_until().decode().strip()
+        response: str = self._serial.read_until().decode().strip()
         return response
 
     def write_status(self, status: int) -> str:
@@ -59,7 +73,7 @@ class DuPALClient:
         return response
 
     def close(self):
-        self.serial.close()
+        self._serial.close()
 
 
 # Example of using the DuPALClient with structured return types
