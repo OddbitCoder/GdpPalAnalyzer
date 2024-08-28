@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional, Callable
 from collections import deque
 
+from dupal_client import DuPALClient
 from pal import Pal16R4Base
 
 
@@ -89,6 +90,65 @@ class PalAnalyzer:
                 pal.clock()
             else:
                 pal.set_inputs(inputs)
+
+    # INPUTS:
+    #   23   22   21   20   19   18   17   16
+    # .----.----.----.----.----.----.----.----.
+    # | xx | xx | xx | xx | xx | xx | 12 | 19 | Byte 2
+    # '----'----'----'----'----'----'----'----'
+    #
+    #   15   14   13   12   11   10    9    8
+    # .----.----.----.----.----.----.----.----.
+    # | 13 | 14 | 15 | 16 | 17 | 18 | 11 |  9 | Byte 1
+    # '----'----'----'----'----'----'----'----'
+    #
+    #    7    6    5    4    3    2    1    0
+    # .----.----.----.----.----.----.----.----.
+    # |  8 |  7 |  6 |  5 |  4 |  3 |  2 |  1 | Byte 0
+    # '----'----'----'----'----'----'----'----'
+    #
+    # OUTPUTS:
+    #    7    6    5    4    3    2    1    0
+    # .----.----.----.----.----.----.----.----.
+    # | 12 | 19 | 13 | 14 | 15 | 16 | 17 | 18 |
+    # '----'----'----'----'----'----'----'----'
+    @staticmethod
+    def analyze_pal_l(port: str):
+        client = DuPALClient(port=port)
+        client.init_board()
+        print("Analyzing 10L8 or 16L8 with all I/O pins set as outputs...")
+        tabu = {}
+        for inputs_1 in range(2 ** 10):  # used to set implicit feedbacks
+            print(".", end="")
+            client.write_status(inputs_1)
+            feedbacks = client.read_status() & 0b111111
+            for inputs_2 in range(2 ** 10):  # actual inputs
+                # did we already observe feedbacks + inputs_2?
+                if (feedbacks, inputs_2) in tabu:
+                    continue
+                client.write_status(inputs_2)
+                outputs = client.read_status()
+                tabu[(feedbacks, inputs_2)] = outputs
+                client.write_status(inputs_1)  # set feedbacks again
+
+        # mapping = {}  # mapping inputs -> outputs
+        # for inputs in range(2 ** 10):
+        #     client.write_status(inputs)
+        #     outputs = client.read_status()
+        #     mapping[inputs] = outputs
+        # # check if implicit feedbacks from I/O pins play any role
+        # inv_mapping = {}  # mapping feedbacks -> inputs (for each possible feedback, remember inputs that caused it)
+        # for inputs, outputs in mapping.items():
+        #     feedbacks = outputs & 0b111111
+        #     if feedbacks not in inv_mapping:
+        #         inv_mapping[feedbacks] = inputs
+        # for feedbacks, inputs_1 in inv_mapping.items():
+        #     for inputs_2 in range(2 ** 10):
+        #         client.write_status(inputs_1)  # set desired feedbacks
+        #         client.write_status(inputs_2)
+        #         outputs = client.read_status()
+        #         if mapping[inputs_2] != outputs:
+        #             print("DIFFERENT OUTPUT UNDER THE SAME INPUT!")
 
     def analyze(
         self, pal: Pal16R4Base, set_zero_mask: int = 0, set_one_mask: int = 0

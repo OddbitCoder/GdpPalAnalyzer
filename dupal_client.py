@@ -8,6 +8,20 @@ class DuPALClient:
     def __init__(self, port: str):
         self.serial = serial.Serial(port, baudrate=57600)
 
+    def init_board(self):
+        self.reset_board()
+        self.send_command("x")
+        self.receive_response()  # "DuPAL - 0.1.2"
+        self.receive_response()  # empty line
+        self.receive_response()  # "REMOTE_CONTROL_ENABLED"
+        self.control_led(1, 1)  # WARNME: we only support 20-pin PALs
+
+    def reset_board(self):
+        if self.serial.is_open:
+            self.serial.dtr = True
+            time.sleep(1)
+            self.serial.dtr = False
+
     def send_command(self, command: str) -> str:
         self.serial.write(command.encode())
         time.sleep(0.1)  # Allow some time for the response
