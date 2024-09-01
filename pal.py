@@ -60,26 +60,12 @@ class DuPALBoard:
         self._pal.clock()
         return self._pal.outputs_as_byte
 
-    def analyze(self):
-        print(f"Analyzing {self._pal.__class__.__name__}...")
-        print(f"Inputs: {self._pal.input_count}")
-        print(f"Outputs: {self._pal.output_count}")
-        pal_10l8 = isinstance(self._pal, Pal10L8)
-        pal_16l8 = isinstance(self._pal, Pal16L8)
-        if pal_10l8 or pal_16l8:
-            # run through all inputs
-            for idx in range(2 ** self._pal.input_count):
-                self.set_inputs(self._pal.get_inputs(idx))
-                outputs = self.read_outputs()
-                print(outputs)
-        if pal_16l8:
-            # try all possible "feedbacks"
-            pass
+    def analyse(self):
+        assert(isinstance(self._pal, Pal16L8))  # currently only works with 16L8
 
 
 class Pal16L8(PalBase):
-    def __init__(self, output_mask: int = 0b111111):  # 0b111111 sets all I/O pins to outputs
-        self._output_mask = output_mask
+    def __init__(self):
         # input pins
         self.i1: int = 0
         self.i2: int = 0
@@ -102,9 +88,6 @@ class Pal16L8(PalBase):
         # outputs
         self.o19: int = 0
         self.o12: int = 0
-
-    def is_input(self, pin: int) -> bool:
-        return (self._output_mask >> (pin - 13)) & 1 == 0
 
     #   23   22   21   20   19   18   17   16
     # .----.----.----.----.----.----.----.----.
@@ -131,18 +114,6 @@ class Pal16L8(PalBase):
         self.i8 = (inputs >> 7) & 1
         self.i9 = (inputs >> 8) & 1
         self.i11 = (inputs >> 9) & 1
-        if self.is_input(13):
-            self.io13 = (inputs >> 15) & 1
-        if self.is_input(14):
-            self.io14 = (inputs >> 14) & 1
-        if self.is_input(15):
-            self.io15 = (inputs >> 13) & 1
-        if self.is_input(16):
-            self.io16 = (inputs >> 12) & 1
-        if self.is_input(17):
-            self.io17 = (inputs >> 11) & 1
-        if self.is_input(18):
-            self.io18 = (inputs >> 10) & 1
 
     @property
     def inputs_as_byte(self) -> int:
@@ -158,18 +129,6 @@ class Pal16L8(PalBase):
             | (self.i9 << 8)
             | (self.i11 << 9)
         )
-        if self.is_input(13):
-            inputs |= self.io13 << 15
-        if self.is_input(14):
-            inputs |= self.io14 << 14
-        if self.is_input(15):
-            inputs |= self.io15 << 13
-        if self.is_input(16):
-            inputs |= self.io16 << 12
-        if self.is_input(17):
-            inputs |= self.io17 << 11
-        if self.is_input(18):
-            inputs |= self.io18 << 10
         return inputs
 
     #    7    6    5    4    3    2    1    0
@@ -179,86 +138,39 @@ class Pal16L8(PalBase):
     def set_outputs(self, outputs: int):
         self.o12 = (outputs >> 7) & 1
         self.o19 = (outputs >> 6) & 1
-        if not self.is_input(13):
-            self.io13 = (outputs >> 5) & 1
-        if not self.is_input(14):
-            self.io14 = (outputs >> 4) & 1
-        if not self.is_input(15):
-            self.io15 = (outputs >> 3) & 1
-        if not self.is_input(16):
-            self.io16 = (outputs >> 2) & 1
-        if not self.is_input(17):
-            self.io17 = (outputs >> 1) & 1
-        if not self.is_input(18):
-            self.io18 = (outputs >> 0) & 1
+        self.io13 = (outputs >> 5) & 1
+        self.io14 = (outputs >> 4) & 1
+        self.io15 = (outputs >> 3) & 1
+        self.io16 = (outputs >> 2) & 1
+        self.io17 = (outputs >> 1) & 1
+        self.io18 = (outputs >> 0) & 1
 
     @property
     def outputs_as_byte(self) -> int:
-        outputs = (
+        return (
             (self.o12 << 7)
             | (self.o19 << 6)
+            | (self.io13 << 5)
+            | (self.io14 << 4)
+            | (self.io15 << 3)
+            | (self.io16 << 2)
+            | (self.io17 << 1)
+            | (self.io18 << 0)
         )
-        if not self.is_input(13):
-            outputs |= self.io13 << 5
-        if not self.is_input(14):
-            outputs |= self.io14 << 4
-        if not self.is_input(15):
-            outputs |= self.io15 << 3
-        if not self.is_input(16):
-            outputs |= self.io16 << 2
-        if not self.is_input(17):
-            outputs |= self.io17 << 1
-        if not self.is_input(18):
-            outputs |= self.io18 << 0
-        return outputs
 
     def __str__(self):
         return (
             f"             +-----_-----+\n"
             f"     i1 ({self.i1}) -|1        20|- VCC\n"
             f"     i2 ({self.i2}) -|2        19|- o19  ({self.o19})\n"
-            f"     i3 ({self.i3}) -|3        18|- io18 ({self.io18}){' <-' if self.is_input(18) else ''}\n"
-            f"     i4 ({self.i4}) -|4        17|- io17 ({self.io17}){' <-' if self.is_input(17) else ''}\n"
-            f"     i5 ({self.i5}) -|5  PAL   16|- io16 ({self.io16}){' <-' if self.is_input(16) else ''}\n"
-            f"     i6 ({self.i6}) -|6  16L8  15|- io15 ({self.io15}){' <-' if self.is_input(15) else ''}\n"
-            f"     i7 ({self.i7}) -|7        14|- io14 ({self.io14}){' <-' if self.is_input(14) else ''}\n"
-            f"     i8 ({self.i8}) -|8        13|- io13 ({self.io13}){' <-' if self.is_input(13) else ''}\n"
+            f"     i3 ({self.i3}) -|3        18|- io18 ({self.io18})\n"
+            f"     i4 ({self.i4}) -|4        17|- io17 ({self.io17})\n"
+            f"     i5 ({self.i5}) -|5  PAL   16|- io16 ({self.io16})\n"
+            f"     i6 ({self.i6}) -|6  16L8  15|- io15 ({self.io15})\n"
+            f"     i7 ({self.i7}) -|7        14|- io14 ({self.io14})\n"
+            f"     i8 ({self.i8}) -|8        13|- io13 ({self.io13})\n"
             f"     i9 ({self.i9}) -|9        12|- o12  ({self.o12})\n"
             f"        GND -|10       11|- i11  ({self.i11})\n"
-            f"             +-----------+\n\n"
-            f"Inputs:  {self.inputs_as_byte}\n"
-            f"Outputs: {self.outputs_as_byte}"
-        )
-
-    @property
-    def input_count(self) -> int:
-        return 10 + (6 - bin(self._output_mask).count("1"))
-
-    @property
-    def output_count(self) -> int:
-        return 2 + bin(self._output_mask).count("1")
-
-    def get_inputs(self, idx: int) -> int:
-        return idx  # WARNME
-
-
-class Pal10L8(Pal16L8):
-    def __init__(self):
-        super().__init__()
-
-    def __str__(self):
-        return (
-            f"             +-----_-----+\n"
-            f"     i1 ({self.i1}) -|1        20|- VCC\n"
-            f"     i2 ({self.i2}) -|2        19|- o19 ({self.o19})\n"
-            f"     i3 ({self.i3}) -|3        18|- o18 ({self.io18})\n"
-            f"     i4 ({self.i4}) -|4        17|- o17 ({self.io17})\n"
-            f"     i5 ({self.i5}) -|5  PAL   16|- o16 ({self.io16})\n"
-            f"     i6 ({self.i6}) -|6  10L8  15|- o15 ({self.io15})\n"
-            f"     i7 ({self.i7}) -|7        14|- o14 ({self.io14})\n"
-            f"     i8 ({self.i8}) -|8        13|- o13 ({self.io13})\n"
-            f"     i9 ({self.i9}) -|9        12|- o12 ({self.o12})\n"
-            f"        GND -|10       11|- i11 ({self.i11})\n"
             f"             +-----------+\n\n"
             f"Inputs:  {self.inputs_as_byte}\n"
             f"Outputs: {self.outputs_as_byte}"
