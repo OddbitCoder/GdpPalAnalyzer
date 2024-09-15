@@ -1,6 +1,23 @@
 from analyzer import PalAnalyzer
+from converter import Converter
+from dupal import DuPalBoard
+from pal import Pal16L8, Pal10L8, Pal16R4, Pal16R4IC49
+import sys
 
-PalAnalyzer.analyze_pal_l(port="COM4")
+print("%x" % sys.maxsize, sys.maxsize > 2**32)
+
+# board = DuPalBoard(Pal16R4IC49(), port="COM4", delay=0.01)
+# analyzer = PalAnalyzer(board)
+# analyzer.analyze("C:\\Work\\pal_tester\\ic49_new.json")
+
+# Converter.convert_to_table(
+#     "C:\\Work\\pal_tester\\reads\\ic12\\ic12_new_code.json",
+#     "C:\\Work\\pal_tester\\reads\\ic12\\ic12_new_code_2.tbl",
+# )
+
+# Exporter.export_table(
+#     "C:\\Work\\pal_tester\\ic7_2.json", "C:\\Work\\pal_tester\\ic7_2.tbl"
+# )
 
 # import random
 # import time

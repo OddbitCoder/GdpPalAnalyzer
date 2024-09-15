@@ -4,9 +4,10 @@ import re
 from typing import Optional
 
 
-class DuPALClient:
-    def __init__(self, port: str):
-        self.serial = serial.Serial(port, baudrate=57600)
+class DuPalClient:
+    def __init__(self, port: str, delay: float = 0.01):
+        self._serial = serial.Serial(port, baudrate=57600)
+        self._delay = delay
 
     def init_board(self):
         self.reset_board()
@@ -17,18 +18,18 @@ class DuPALClient:
         self.control_led(1, 1)  # WARNME: we only support 20-pin PALs
 
     def reset_board(self):
-        if self.serial.is_open:
-            self.serial.dtr = True
+        if self._serial.is_open:
+            self._serial.dtr = True
             time.sleep(1)
-            self.serial.dtr = False
+            self._serial.dtr = False
 
     def send_command(self, command: str) -> str:
-        self.serial.write(command.encode())
-        time.sleep(0.1)  # Allow some time for the response
+        self._serial.write(command.encode())
+        time.sleep(self._delay)  # Allow some time for the response
         return self.receive_response()
 
     def receive_response(self) -> str:
-        response: str = self.serial.read_until().decode().strip()
+        response: str = self._serial.read_until().decode().strip()
         return response
 
     def write_status(self, status: int) -> str:
@@ -73,21 +74,4 @@ class DuPALClient:
         return response
 
     def close(self):
-        self.serial.close()
-
-
-# Example of using the DuPALClient with structured return types
-if __name__ == "__main__":
-    client = DuPALClient("/dev/ttyUSB0")  # Change the port as necessary
-
-    try:
-        print("Model number: ", client.model())
-        print("Pin Status as integer: ", client.read_status())
-        print("Write Status: ", client.write_status(0x12345678))
-        print("LED Control: ", client.control_led(1, 1))  # Turn on LED for 20 pin PAL
-        client.reset()
-        client.exit()
-    except ValueError as e:
-        print("Error: ", e)
-    finally:
-        client.close()
+        self._serial.close()
