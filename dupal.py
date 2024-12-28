@@ -32,7 +32,7 @@ class DuPalBoard(DuPalBase):
     def read_outputs(self) -> int:
         outputs = self._client.read_status()
         self.pal.set_outputs(outputs)
-        # assert outputs == self.pal.outputs_as_byte
+        assert outputs == self.pal.outputs_as_byte
         return self.pal.outputs_as_byte
 
     def clock(self) -> int:

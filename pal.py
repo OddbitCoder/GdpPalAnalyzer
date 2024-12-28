@@ -46,6 +46,7 @@ class Pal16L8(PalBase):
         self.i8: int = 0
         self.i9: int = 0
         self.i11: int = 0
+        # according to the schematic, the following can all be 3-state outputs
         # I/O
         self.io13: int = 0
         self.io14: int = 0
@@ -53,7 +54,7 @@ class Pal16L8(PalBase):
         self.io16: int = 0
         self.io17: int = 0
         self.io18: int = 0
-        # tri-state outputs
+        # outputs
         self.o19: int = 0
         self.o12: int = 0
 
@@ -85,7 +86,17 @@ class Pal16L8(PalBase):
 
     @staticmethod
     def map_inputs(inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False) -> int:
-        return inputs if not pull_tristate_outputs else inputs | (1 << 16) | (1 << 17)
+        return inputs if not pull_tristate_outputs else \
+            (inputs
+             | (1 << 10)
+             | (1 << 11)
+             | (1 << 12)
+             | (1 << 13)
+             | (1 << 14)
+             | (1 << 15)
+             | (1 << 16)
+             | (1 << 17)
+             )
 
     @property
     def inputs_as_byte(self) -> int:
@@ -149,7 +160,8 @@ class Pal16L8(PalBase):
         )
 
 
-class Pal10L8(Pal16L8):  # WARNME: not sure if any of the outputs can be in HI-Z
+class Pal10L8(Pal16L8):
+    # according to the schematic, this PAL does not have any 3-state outputs
     def __init__(self):
         super().__init__()
         self._pal_type = "10L8"

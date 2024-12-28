@@ -1,23 +1,55 @@
 from analyzer import PalAnalyzer
 from converter import Converter
-from dupal import DuPalBoard
-from pal import Pal16L8, Pal10L8, Pal16R4, Pal16R4IC49
+from dupal import DuPalBoard, DuPalBase
+from node import Node
+from pal import Pal16L8
 import sys
 
-print("%x" % sys.maxsize, sys.maxsize > 2**32)
+# Sanity checks need to make sure that we are not dealing with a PAL configuration that we do not support.
+# We need to check if any of the "pure" outputs is in HI-Z, and simply set the HI-Z mask.
+# We need to check if any of the outputs with feedbacks (I/O) is in HI-Z and if yes, we need to make sure that
+# it is not intended to act as an input.
+def sanity_checks_ic7(dupal: DuPalBase, node: Node, inputs: int, outputs: int):
+    print("Checking new state...")
+    print(f"Inputs:  {inputs:08b}")
+    print(f"Outputs: {outputs:018b}")
+    # check if any of the outputs w/o feedbacks is in HI-Z state (this is not an issue, we just need to note it)
+    # this can only be outputs that are now 0 (because they were set to 0) and pick up to 1 if we set them to 1
+    mask = 0b11000000
+    candidates = ~outputs & mask  # can only be outputs that are now 0 (because they were set to 0)
+    if candidates:
+        # can only be outputs that pick up to 1 if we set them to 1
+        new_inputs = inputs | (candidates << 10)
+        new_outputs = dupal.set_inputs(new_inputs)
+        node.hi_z_mask = candidates & new_outputs
+        if node.hi_z_mask:
+            print(f"Found outputs in HI-Z: {node.hi_z_mask:08b}")
+    # check if any of the outputs with feedbacks is in HI-Z state
+    mask = ~mask  # 0b00111111
+    candidates = ~outputs & mask  # can only be outputs that are now 0 (because they were set to 0)
+    if candidates:
+        single_io_list = [1 << i for i in range(candidates.bit_length()) if candidates & (1 << i)]
+        for single_io in single_io_list:
+            # pull this single I/O to 1
+            new_inputs = inputs | (single_io << 10)
+            new_outputs = dupal.set_inputs(new_inputs)
+            hi_z_mask = candidates & new_outputs  # was that I/O pulled to 1?
+            assert(outputs == new_outputs & ~hi_z_mask)  # is the rest still the same?
+            if hi_z_mask:
+                node.hi_z_mask |= hi_z_mask
+                print(f"I/O {single_io:08b} is HI-Z")
+            else:
+                print(f"I/O {single_io:08b} is 0")
 
-# board = DuPalBoard(Pal16R4IC49(), port="COM4", delay=0.01)
-# analyzer = PalAnalyzer(board)
-# analyzer.analyze("C:\\Work\\pal_tester\\ic49_new.json")
+board = DuPalBoard(Pal16L8(), port="COM4", delay=0.01)
+analyzer = PalAnalyzer(board, sanity_checks_ic7)
+analyzer.analyze("C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.json")
 
-# Converter.convert_to_table(
-#     "C:\\Work\\pal_tester\\reads\\ic12\\ic12_new_code.json",
-#     "C:\\Work\\pal_tester\\reads\\ic12\\ic12_new_code_2.tbl",
+# Converter.convert_to_table_16l8(
+#     "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.json",
+#     "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.tbl",
 # )
 
-# Exporter.export_table(
-#     "C:\\Work\\pal_tester\\ic7_2.json", "C:\\Work\\pal_tester\\ic7_2.tbl"
-# )
 
 # import random
 # import time

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class Node:
     outputs: int
+    hi_z_mask: int = 0
 
     # each outlink is a tuple of (inputs, outputs)
     # next_inputs_idx are next inputs to be evaluated
