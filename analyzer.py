@@ -6,12 +6,21 @@ from dupal import DuPalBase
 from node import Node
 
 
+def bstr_r(number: int, hi_z_mask: int = 0):
+    binary_str = f"{number:08b}"
+    mask_str = f"{hi_z_mask:08b}"
+    result_str = "".join(
+        "Z" if mask_str[i] == "1" else binary_str[i] for i in range(8)
+    )
+    return f"{result_str[:3]}_{result_str[3:7]}_{result_str[7:8]}"
+
+
 class PalAnalyzer:
     def __init__(self, dupal_board: DuPalBase):
         self._dupal_board = dupal_board
 
     @staticmethod
-    def _get_or_create_node(nodes: dict[int, Node], outputs: int) -> Tuple[Node, bool]:
+    def _get_or_create_node(nodes: dict[str, Node], outputs: str) -> Tuple[Node, bool]:
         if outputs not in nodes:
             nodes[outputs] = Node(outputs, outlinks=[], clock_outlinks=[])
             return nodes[outputs], True
@@ -19,8 +28,8 @@ class PalAnalyzer:
 
     @staticmethod
     def _find_path(
-        path_cache: dict[int, Tuple[Node, list[int]]],
-        nodes: dict[int, Node],
+        path_cache: dict[str, Tuple[Node, list[int]]],
+        nodes: dict[str, Node],
         start_node: Node,
         node_condition: Callable[[Node], bool],
     ) -> Tuple[Optional[Node], list[int]]:
@@ -68,21 +77,21 @@ class PalAnalyzer:
     def analyze(self, output_file_name: str) -> bool:
         node_count = 0
         outlink_count = 0
-        nodes: dict[int, Node] = {}
-        path_cache: dict[int, Tuple[Node, list[int]]] = {}
+        nodes: dict[str, Node] = {}
+        path_cache: dict[str, Tuple[Node, list[int]]] = {}
         possible_inputs = [inputs for inputs in range(2**8)]
-        outputs = self._dupal_board.set_inputs(0)
+        outputs = bstr_r(self._dupal_board.set_inputs(0))  # we need to get hi-z mask here somehow
         node, _ = self._get_or_create_node(nodes, outputs)
         node_count += 1
         while True:
             # can we create outlink?
             if len(node.outlinks) < len(possible_inputs):
                 inputs = possible_inputs[node.next_inputs_idx]
-                outputs = self._dupal_board.set_inputs(inputs)
+                outputs = bstr_r(self._dupal_board.set_inputs(inputs))  # we need to get hi-z mask here somehow
                 node.outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_inputs_idx += 1
-                child_node, node_created = self._get_or_create_node(nodes, inputs)
+                child_node, node_created = self._get_or_create_node(nodes, outputs)
                 nodes[outputs] = child_node
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]
@@ -93,12 +102,12 @@ class PalAnalyzer:
                 possible_inputs
             ):  # should we trigger clock?
                 inputs = possible_inputs[node.next_clock_inputs_idx]
-                self._dupal_board.set_inputs(inputs)
-                outputs = self._dupal_board.clock()
+                self._dupal_board.set_inputs(inputs)  # we need to get hi-z mask here somehow
+                outputs = bstr_r(self._dupal_board.clock())
                 node.clock_outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_clock_inputs_idx += 1
-                child_node, node_created = self._get_or_create_node(nodes, inputs)
+                child_node, node_created = self._get_or_create_node(nodes, outputs)
                 nodes[outputs] = child_node
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]

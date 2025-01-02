@@ -1,7 +1,7 @@
 import sys
 from enum import Enum
 from queue import Queue
-from dupal import DuPalBoard
+from dupal import DuPalBoard, DuPalBase
 from pal import Pal16L8, Pal10L8, Pal16R4
 
 from analyzer import PalAnalyzer
@@ -48,7 +48,7 @@ def binary_combinations(number):
 
 
 def analyze_state(
-    dupal_board: DuPalBoard,
+    dupal_board: DuPalBase,
     inputs: int,
     inputs_queue: Queue,
     inputs_set: set,
@@ -110,7 +110,7 @@ def analyze_state(
 
 
 def run_analyzer(
-    dupal_board: DuPalBoard,
+    dupal_board: DuPalBase,
     pal_type: PalType,
     output_filename: str,
     stdout_filename: str = None,
@@ -268,7 +268,7 @@ def convert_file(
 if __name__ == "__main__":
     dupal_board = DuPalBoard(Pal16R4(), port="COM4", delay=0.001)
     analyzer = PalAnalyzer(dupal_board)
-    analyzer.analyze("C:\\Work\\PalAnalyzer\\new_reads\\ic12\\ic12.json")
+    analyzer.analyze("C:\\Work\\PalAnalyzer\\new_reads\\ic12\\ic12_2.json")
     # run_analyzer(
     #     dupal_board,
     #     PalType.PAL16L8,
