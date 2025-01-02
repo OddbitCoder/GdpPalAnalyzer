@@ -8,20 +8,13 @@ from pal import Pal10L8, Pal16R4, Pal16L8
 
 
 class PalAnalyzer:
-    def __init__(self, dupal: DuPalBase, sanity_checks: Callable[[DuPalBase, Node, int, int], None] = None):
+    def __init__(self, dupal: DuPalBase):
         self._dupal = dupal
-        # Sanity checks need to make sure that we are not dealing with a PAL configuration that we do not support.
-        # We need to check if any of the "pure" outputs is in HI-Z, and simply set the HI-Z mask.
-        # We need to check if any of the outputs with feedbacks (I/O) is in HI-Z and if yes, we need to make sure that
-        # it is not intended to act as an input.
-        self._sanity_checks = sanity_checks
 
-    def _get_or_create_node(self, nodes: dict[int, Node], inputs: int, outputs: int) -> Tuple[Node, bool]:
+    @staticmethod
+    def _get_or_create_node(nodes: dict[int, Node], outputs: int) -> Tuple[Node, bool]:
         if outputs not in nodes:
             nodes[outputs] = Node(outputs, outlinks=[], clock_outlinks=[])
-            # run sanity checks
-            if self._sanity_checks:
-                self._sanity_checks(self._dupal, nodes[outputs], inputs, outputs)
             return nodes[outputs], True
         return nodes[outputs], False
 
@@ -91,7 +84,7 @@ class PalAnalyzer:
         path_cache: dict[int, Tuple[Node, list[int]]] = {}
         possible_inputs = [inputs for inputs in range(inputs_range)]
         outputs = self._dupal.set_inputs(0)
-        node, node_created = self._get_or_create_node(nodes, 0, outputs)
+        node, node_created = self._get_or_create_node(nodes, 0)
         node_count += 1 if node_created else 0
         multiplier = 2 if not exclude_clock_links else 1
         while True:
@@ -102,7 +95,7 @@ class PalAnalyzer:
                 node.outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_inputs_idx += 1
-                child_node, node_created = self._get_or_create_node(nodes, inputs, outputs)
+                child_node, node_created = self._get_or_create_node(nodes, inputs)
                 nodes[outputs] = child_node
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]
@@ -118,7 +111,7 @@ class PalAnalyzer:
                 node.clock_outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_clock_inputs_idx += 1
-                child_node, node_created = self._get_or_create_node(nodes, inputs, outputs)
+                child_node, node_created = self._get_or_create_node(nodes, inputs)
                 nodes[outputs] = child_node
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]

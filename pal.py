@@ -23,7 +23,9 @@ class PalBase:
         raise NotImplementedError
 
     @staticmethod
-    def map_inputs(inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False) -> int:
+    def map_inputs(
+        inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False
+    ) -> int:
         raise NotImplementedError
 
     @property
@@ -85,18 +87,24 @@ class Pal16L8(PalBase):
         self.i11 = (inputs >> 9) & 1
 
     @staticmethod
-    def map_inputs(inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False) -> int:
-        return inputs if not pull_tristate_outputs else \
-            (inputs
-             | (1 << 10)
-             | (1 << 11)
-             | (1 << 12)
-             | (1 << 13)
-             | (1 << 14)
-             | (1 << 15)
-             | (1 << 16)
-             | (1 << 17)
-             )
+    def map_inputs(
+        inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False
+    ) -> int:
+        return (
+            inputs
+            if not pull_tristate_outputs
+            else (
+                inputs
+                | (1 << 10)
+                | (1 << 11)
+                | (1 << 12)
+                | (1 << 13)
+                | (1 << 14)
+                | (1 << 15)
+                | (1 << 16)
+                | (1 << 17)
+            )
+        )
 
     @property
     def inputs_as_byte(self) -> int:
@@ -277,7 +285,9 @@ class Pal16R4(PalBase):
         )
 
     @staticmethod
-    def map_inputs(inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False) -> int:
+    def map_inputs(
+        inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False
+    ) -> int:
         mapped_inputs = inputs << 1
         if pull_tristate_outputs:
             mapped_inputs |= (1 << 14) | (1 << 13) | (1 << 12) | (1 << 11)
@@ -340,7 +350,9 @@ class Pal16R4IC49(Pal16R4):
         )
 
     @staticmethod
-    def map_inputs(inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False) -> int:
+    def map_inputs(
+        inputs: int, clock_bit: bool = False, pull_tristate_outputs: bool = False
+    ) -> int:
         i12 = (inputs >> 8) & 1
         i13 = (inputs >> 9) & 1
         mapped_inputs = (inputs & 0xFF) << 1
