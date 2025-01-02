@@ -6,8 +6,8 @@ from pal import Pal16L8
 
 
 class PalType(Enum):
-    PAL10L8 = (1,)
-    PAL16L8 = (2,)
+    PAL10L8 = 1
+    PAL16L8 = 2
     PAL16R4 = 3
 
 
@@ -150,7 +150,7 @@ def convert_file(
     filename,
     out_filename,
     pal_type: PalType,
-    inputs_mask=None,   # I - input, F - feedback, 0 - ignore
+    inputs_mask=None,  # I - input, F - feedback, 0 - ignore
     outputs_mask=None,  # O - output, T - tri-state, 0 - ignore
 ):
     # set masks
@@ -186,7 +186,7 @@ def convert_file(
         "i1",
     ]
     output_names = ["o12", "o19", "", "io13", "io14", "io15", "io16", "io17", "io18"]
-    output_names_3s = ["z12", "z19", "", "z13", "z14", "z15", "z16", "z17", "z18"]
+    output_names_tri_state = ["z12", "z19", "", "z13", "z14", "z15", "z16", "z17", "z18"]
     inputs_header = [
         f" {input_name}" if input_char in ["I", "F"] else ""
         for input_char, input_name in zip(inputs_mask, input_names)
@@ -194,12 +194,10 @@ def convert_file(
     outputs_header = [
         f" {output_name}" if output_char in ["O", "T"] else ""
         for output_char, output_name in zip(outputs_mask, output_names)
-    ]
-    outputs_header_3s = [
+    ] + [
         f" {output_name}" if output_char == "T" else ""
-        for output_char, output_name in zip(outputs_mask, output_names_3s)
+        for output_char, output_name in zip(outputs_mask, output_names_tri_state)
     ]
-    outputs_header.extend(outputs_header_3s)
     header = f""".i {inputs_count}
 .o {outputs_count}
 .ilb{"".join(inputs_header)}
@@ -256,25 +254,30 @@ def convert_file(
 
 
 if __name__ == "__main__":
-    dupal_board = DuPalBoard(Pal16L8(), port="COM4", delay=0.01)
-    run_analyzer(
-        dupal_board,
-        PalType.PAL16L8,
-        f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.txt",
-        f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_stdout.txt",
+    # dupal_board = DuPalBoard(Pal16L8(), port="COM4", delay=0.01)
+    # run_analyzer(
+    #     dupal_board,
+    #     PalType.PAL16L8,
+    #     f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.txt",
+    #     f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_stdout.txt",
+    # )
+    convert_file(
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.txt",
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.tbl",
+        PalType.PAL16L8
     )
-    # convert_file(
-    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.txt",
-    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.tbl",
-    #     PalType.PAL16L8
-    # )
-    # convert_file(
-    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.txt",
-    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.tbl",
-    #     PalType.PAL16L8
-    # )
-    # convert_file(
-    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.txt",
-    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.tbl",
-    #     PalType.PAL10L8
-    # )
+    convert_file(
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.txt",
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.tbl",
+        PalType.PAL16L8
+    )
+    convert_file(
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.txt",
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.tbl",
+        PalType.PAL16L8
+    )
+    convert_file(
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.txt",
+        "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.tbl",
+        PalType.PAL10L8
+    )
