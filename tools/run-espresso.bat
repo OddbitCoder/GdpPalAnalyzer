@@ -1,0 +1,1 @@
+espresso.exe -Dexact -oeqntott %1

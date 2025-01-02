@@ -2,7 +2,9 @@ import sys
 from enum import Enum
 from queue import Queue
 from dupal import DuPalBoard
-from pal import Pal16L8
+from pal import Pal16L8, Pal10L8, Pal16R4
+
+from analyzer import PalAnalyzer
 
 
 class PalType(Enum):
@@ -186,7 +188,17 @@ def convert_file(
         "i1",
     ]
     output_names = ["o12", "o19", "", "io13", "io14", "io15", "io16", "io17", "io18"]
-    output_names_tri_state = ["z12", "z19", "", "z13", "z14", "z15", "z16", "z17", "z18"]
+    output_names_tri_state = [
+        "z12",
+        "z19",
+        "",
+        "z13",
+        "z14",
+        "z15",
+        "z16",
+        "z17",
+        "z18",
+    ]
     inputs_header = [
         f" {input_name}" if input_char in ["I", "F"] else ""
         for input_char, input_name in zip(inputs_mask, input_names)
@@ -254,30 +266,32 @@ def convert_file(
 
 
 if __name__ == "__main__":
-    # dupal_board = DuPalBoard(Pal16L8(), port="COM4", delay=0.01)
+    dupal_board = DuPalBoard(Pal16R4(), port="COM4", delay=0.001)
+    analyzer = PalAnalyzer(dupal_board)
+    analyzer.analyze("C:\\Work\\PalAnalyzer\\new_reads\\ic12\\ic12.json")
     # run_analyzer(
     #     dupal_board,
     #     PalType.PAL16L8,
-    #     f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.txt",
-    #     f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_stdout.txt",
+    #     f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_full_7.txt",
+    #     f"C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_full_stdout_7.txt",
     # )
-    convert_file(
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.txt",
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.tbl",
-        PalType.PAL16L8
-    )
-    convert_file(
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.txt",
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7.tbl",
-        PalType.PAL16L8
-    )
-    convert_file(
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.txt",
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.tbl",
-        PalType.PAL16L8
-    )
-    convert_file(
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.txt",
-        "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.tbl",
-        PalType.PAL10L8
-    )
+    # convert_file(
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.txt",
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic7\\ic7.tbl",
+    #     PalType.PAL16L8,
+    # )
+    # convert_file(
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_full.txt",
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic7_full\\ic7_full.tbl",
+    #     PalType.PAL16L8,
+    # )
+    # convert_file(
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.txt",
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic22\\ic22.tbl",
+    #     PalType.PAL16L8,
+    # )
+    # convert_file(
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.txt",
+    #     "C:\\Work\\PalAnalyzer\\new_reads\\ic24\\ic24.tbl",
+    #     PalType.PAL10L8,
+    # )

@@ -4,12 +4,11 @@ from typing import Tuple, Callable, Optional
 
 from dupal import DuPalBase
 from node import Node
-from pal import Pal10L8, Pal16R4, Pal16L8
 
 
 class PalAnalyzer:
-    def __init__(self, dupal: DuPalBase):
-        self._dupal = dupal
+    def __init__(self, dupal_board: DuPalBase):
+        self._dupal_board = dupal_board
 
     @staticmethod
     def _get_or_create_node(nodes: dict[int, Node], outputs: int) -> Tuple[Node, bool]:
@@ -54,10 +53,10 @@ class PalAnalyzer:
     def _walk_to(self, path: list[int]):
         for inputs in path:
             if inputs < 0:
-                self._dupal.set_inputs(-inputs - 1)
-                self._dupal.clock()
+                self._dupal_board.set_inputs(-inputs - 1)
+                self._dupal_board.clock()
             else:
-                self._dupal.set_inputs(inputs)
+                self._dupal_board.set_inputs(inputs)
 
     @staticmethod
     def _save_states_to_file(nodes, file_name: str):
@@ -66,32 +65,20 @@ class PalAnalyzer:
         with open(file_name, "w", encoding="utf-8") as file:
             file.write(data_json)
 
-    def _analyze_10l8(self, output_file_name: str):
-        outputs = {}
-        for inputs in range(2**10):
-            outputs[inputs] = self._dupal.set_inputs(inputs)
-            print(f"{inputs + 1} / {2**10}")
-        data_json = json.dumps(outputs)
-        with open(output_file_name, "w", encoding="utf-8") as file:
-            file.write(data_json)
-
-    def _analyze(
-        self, output_file_name: str, exclude_clock_links: bool, inputs_range: int
-    ) -> bool:
+    def analyze(self, output_file_name: str) -> bool:
         node_count = 0
         outlink_count = 0
         nodes: dict[int, Node] = {}
         path_cache: dict[int, Tuple[Node, list[int]]] = {}
-        possible_inputs = [inputs for inputs in range(inputs_range)]
-        outputs = self._dupal.set_inputs(0)
-        node, node_created = self._get_or_create_node(nodes, 0)
-        node_count += 1 if node_created else 0
-        multiplier = 2 if not exclude_clock_links else 1
+        possible_inputs = [inputs for inputs in range(2**8)]
+        outputs = self._dupal_board.set_inputs(0)
+        node, _ = self._get_or_create_node(nodes, outputs)
+        node_count += 1
         while True:
             # can we create outlink?
             if len(node.outlinks) < len(possible_inputs):
                 inputs = possible_inputs[node.next_inputs_idx]
-                outputs = self._dupal.set_inputs(inputs)
+                outputs = self._dupal_board.set_inputs(inputs)
                 node.outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_inputs_idx += 1
@@ -100,14 +87,14 @@ class PalAnalyzer:
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]
                 print(
-                    f"{outlink_count} / {node_count * len(possible_inputs) * multiplier} ({node_count} states)"
+                    f"{outlink_count} / {node_count * len(possible_inputs) * 2} ({node_count} states)"
                 )
-            elif not exclude_clock_links and len(node.clock_outlinks) < len(
+            elif len(node.clock_outlinks) < len(
                 possible_inputs
             ):  # should we trigger clock?
                 inputs = possible_inputs[node.next_clock_inputs_idx]
-                self._dupal.set_inputs(inputs)
-                outputs = self._dupal.clock()
+                self._dupal_board.set_inputs(inputs)
+                outputs = self._dupal_board.clock()
                 node.clock_outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_clock_inputs_idx += 1
@@ -116,7 +103,7 @@ class PalAnalyzer:
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]
                 print(
-                    f"{outlink_count} / {node_count * len(possible_inputs) * multiplier} ({node_count} states)"
+                    f"{outlink_count} / {node_count * len(possible_inputs) * 2} ({node_count} states)"
                 )
             else:
                 # can we walk to node that is not yet completely mapped out?
@@ -127,14 +114,14 @@ class PalAnalyzer:
                         nodes,
                         start_node,
                         lambda n: len(n.outlinks) + len(n.clock_outlinks)
-                        < multiplier * len(possible_inputs),
+                        < 2 * len(possible_inputs),
                     )
-                    if outlink_count < node_count * len(possible_inputs) * multiplier
+                    if outlink_count < node_count * len(possible_inputs) * 2
                     else (None, None)
                 )
                 assert not node or len(node.outlinks) + len(
                     node.clock_outlinks
-                ) < multiplier * len(possible_inputs), "We found a complete node"
+                ) < 2 * len(possible_inputs), "We found a complete node"
                 if node:
                     self._walk_to(path)
                     path_cache[start_node.outputs] = (node, path)
@@ -143,7 +130,7 @@ class PalAnalyzer:
                     done = False
                     if all(
                         len(node.outlinks) + len(node.clock_outlinks)
-                        == multiplier * len(possible_inputs)
+                        == 2 * len(possible_inputs)
                         for node in nodes.values()
                     ):
                         print("We have everything we need.")
@@ -158,22 +145,3 @@ class PalAnalyzer:
                     print(f"Total outlinks: {total_outlinks}")
                     self._save_states_to_file(nodes, output_file_name)
                     return done
-
-    def analyze(self, output_file_name: str) -> bool:
-        if isinstance(self._dupal.pal, Pal10L8):
-            self._analyze_10l8(output_file_name)
-            return True
-        elif isinstance(self._dupal.pal, Pal16L8):
-            return self._analyze(
-                output_file_name,
-                exclude_clock_links=True,
-                inputs_range=self._dupal.pal.inputs_range,
-            )
-        elif isinstance(self._dupal.pal, Pal16R4):
-            return self._analyze(
-                output_file_name,
-                exclude_clock_links=False,
-                inputs_range=self._dupal.pal.inputs_range,
-            )
-        else:
-            print("This PAL is not supported.")
