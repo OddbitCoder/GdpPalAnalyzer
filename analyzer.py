@@ -2,77 +2,82 @@ import json
 from collections import deque
 from typing import Tuple, Callable, Optional
 
-from dupal import DuPalBase
+from pal import PalBase
 from node import Node
+from butils import bstr8
 
 
-def bstr_r(number: int, hi_z_mask: int = 0):
-    binary_str = f"{number:08b}"
-    mask_str = f"{hi_z_mask:08b}"
-    result_str = "".join(
-        "Z" if mask_str[i] == "1" else binary_str[i] for i in range(8)
+# tri-state  (12)(19)(13)
+# registered (14)(15)(16)(17)
+# tri-state  (18)
+# input pins (11-OE)(9)(8)(7)(6)(5)(4)(3)(2)(1-CLK)
+# -----------------------------------------------------
+# inputs     (12)(19)(13)_(18)_(9)(8)(7)(6)(5)(4)(3)(2)
+def map_inputs(inputs: int) -> int:
+    return (
+        ((inputs & 0b000_0_11111111) << 1)
+        | ((inputs & 0b000_1_00000000) << 2)
+        | ((inputs & 0b111_0_00000000) << 6)
     )
-    return f"{result_str[:3]}_{result_str[3:7]}_{result_str[7:8]}"
+
+
+def get_or_create_node(nodes: dict[str, Node], outputs: str) -> Tuple[Node, bool]:
+    if outputs not in nodes:
+        nodes[outputs] = Node(outputs, outlinks=[], clock_outlinks=[])
+        return nodes[outputs], True
+    return nodes[outputs], False
+
+
+def save_states_to_file(nodes, file_name: str):
+    data_json = json.dumps(nodes, default=lambda o: o.__dict__)
+    # save to file
+    with open(file_name, "w", encoding="utf-8") as file:
+        file.write(data_json)
+
+
+def find_path(
+    path_cache: dict[str, Tuple[Node, list[int]]],
+    nodes: dict[str, Node],
+    start_node: Node,
+    node_condition: Callable[[Node], bool],
+) -> Tuple[Optional[Node], list[int]]:
+    # check cache
+    if start_node.outputs in path_cache:
+        (node, path) = path_cache[start_node.outputs]
+        if node_condition(node):
+            return node, path
+
+    queue = deque([(start_node, [])])
+    visited = set()
+
+    while queue:
+        node, path = queue.popleft()
+
+        if node_condition(node):
+            return node, path
+
+        visited.add(node.outputs)
+
+        for inputs, outputs in node.outlinks + [
+            (-(inputs + 1), outputs) for inputs, outputs in node.clock_outlinks
+        ]:
+            child_node = nodes.get(outputs)
+            if child_node and child_node.outputs not in visited:
+                queue.append((child_node, path + [inputs]))
+
+    return None, []
 
 
 class PalAnalyzer:
-    def __init__(self, dupal_board: DuPalBase):
+    def __init__(self, dupal_board: PalBase):
         self._dupal_board = dupal_board
-
-    @staticmethod
-    def _get_or_create_node(nodes: dict[str, Node], outputs: str) -> Tuple[Node, bool]:
-        if outputs not in nodes:
-            nodes[outputs] = Node(outputs, outlinks=[], clock_outlinks=[])
-            return nodes[outputs], True
-        return nodes[outputs], False
-
-    @staticmethod
-    def _find_path(
-        path_cache: dict[str, Tuple[Node, list[int]]],
-        nodes: dict[str, Node],
-        start_node: Node,
-        node_condition: Callable[[Node], bool],
-    ) -> Tuple[Optional[Node], list[int]]:
-        # check cache
-        if start_node.outputs in path_cache:
-            (node, path) = path_cache[start_node.outputs]
-            if node_condition(node):
-                return node, path
-
-        queue = deque([(start_node, [])])
-        visited = set()
-
-        while queue:
-            node, path = queue.popleft()
-
-            if node_condition(node):
-                return node, path
-
-            visited.add(node.outputs)
-
-            for inputs, outputs in node.outlinks + [
-                (-(inputs + 1), outputs) for inputs, outputs in node.clock_outlinks
-            ]:
-                child_node = nodes.get(outputs)
-                if child_node and child_node.outputs not in visited:
-                    queue.append((child_node, path + [inputs]))
-
-        return None, []
 
     def _walk_to(self, path: list[int]):
         for inputs in path:
             if inputs < 0:
-                self._dupal_board.set_inputs(-inputs - 1)
-                self._dupal_board.clock()
+                self._dupal_board.read_outputs(map_inputs(-inputs - 1), clock=True)
             else:
-                self._dupal_board.set_inputs(inputs)
-
-    @staticmethod
-    def _save_states_to_file(nodes, file_name: str):
-        data_json = json.dumps(nodes, default=lambda o: o.__dict__)
-        # save to file
-        with open(file_name, "w", encoding="utf-8") as file:
-            file.write(data_json)
+                self._dupal_board.read_outputs(map_inputs(inputs))
 
     def analyze(self, output_file_name: str) -> bool:
         node_count = 0
@@ -80,18 +85,18 @@ class PalAnalyzer:
         nodes: dict[str, Node] = {}
         path_cache: dict[str, Tuple[Node, list[int]]] = {}
         possible_inputs = [inputs for inputs in range(2**8)]
-        outputs = bstr_r(self._dupal_board.set_inputs(0))  # we need to get hi-z mask here somehow
-        node, _ = self._get_or_create_node(nodes, outputs)
+        outputs = bstr8(*self._dupal_board.read_states(0))
+        node, _ = get_or_create_node(nodes, outputs)
         node_count += 1
         while True:
             # can we create outlink?
             if len(node.outlinks) < len(possible_inputs):
                 inputs = possible_inputs[node.next_inputs_idx]
-                outputs = bstr_r(self._dupal_board.set_inputs(inputs))  # we need to get hi-z mask here somehow
+                outputs = bstr8(*self._dupal_board.read_states(map_inputs(inputs)))
                 node.outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_inputs_idx += 1
-                child_node, node_created = self._get_or_create_node(nodes, outputs)
+                child_node, node_created = get_or_create_node(nodes, outputs)
                 nodes[outputs] = child_node
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]
@@ -102,12 +107,13 @@ class PalAnalyzer:
                 possible_inputs
             ):  # should we trigger clock?
                 inputs = possible_inputs[node.next_clock_inputs_idx]
-                self._dupal_board.set_inputs(inputs)  # we need to get hi-z mask here somehow
-                outputs = bstr_r(self._dupal_board.clock())
+                outputs = bstr8(
+                    *self._dupal_board.read_states(map_inputs(inputs), clock=True)
+                )
                 node.clock_outlinks.append((inputs, outputs))
                 outlink_count += 1
                 node.next_clock_inputs_idx += 1
-                child_node, node_created = self._get_or_create_node(nodes, outputs)
+                child_node, node_created = get_or_create_node(nodes, outputs)
                 nodes[outputs] = child_node
                 node_count += 1 if node_created else 0
                 node = nodes[outputs]
@@ -118,7 +124,7 @@ class PalAnalyzer:
                 # can we walk to node that is not yet completely mapped out?
                 start_node = node
                 node, path = (
-                    self._find_path(
+                    find_path(
                         path_cache,
                         nodes,
                         start_node,
@@ -152,5 +158,5 @@ class PalAnalyzer:
                     for node in nodes.values():
                         total_outlinks += len(node.outlinks) + len(node.clock_outlinks)
                     print(f"Total outlinks: {total_outlinks}")
-                    self._save_states_to_file(nodes, output_file_name)
+                    save_states_to_file(nodes, output_file_name)
                     return done
