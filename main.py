@@ -9,6 +9,7 @@ if __name__ == "__main__":
     PalRAnalyzer.convert_file(
         "C:\\Work\\PalAnalyzer\\reads\\ic49\\ic49.json",
         "C:\\Work\\PalAnalyzer\\reads\\ic49\\ic49.tbl",
+        inputs_mask="F0FFFFF00IIIIIIII0"
     )
     # run_analyzer(
     #     dupal_board,
