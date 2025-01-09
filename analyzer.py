@@ -1,162 +1,405 @@
 import json
+import sys
 from collections import deque
 from typing import Tuple, Callable, Optional
 
-from pal import PalBase
 from node import Node
-from butils import bstr8
+from pal import PalBase, PalType
+from utils import AddOnceQueue, bcomb, bstr18, bstr8
 
 
-# tri-state  (12)(19)(13)
-# registered (14)(15)(16)(17)
-# tri-state  (18)
-# input pins (11-OE)(9)(8)(7)(6)(5)(4)(3)(2)(1-CLK)
-# -----------------------------------------------------
-# inputs     (12)(19)(13)_(18)_(9)(8)(7)(6)(5)(4)(3)(2)
-def map_inputs(inputs: int) -> int:
-    return (
-        ((inputs & 0b000_0_11111111) << 1)
-        | ((inputs & 0b000_1_00000000) << 2)
-        | ((inputs & 0b111_0_00000000) << 6)
-    )
-
-
-def get_or_create_node(nodes: dict[str, Node], outputs: str) -> Tuple[Node, bool]:
-    if outputs not in nodes:
-        nodes[outputs] = Node(outputs, outlinks=[], clock_outlinks=[])
-        return nodes[outputs], True
-    return nodes[outputs], False
-
-
-def save_states_to_file(nodes, file_name: str):
-    data_json = json.dumps(nodes, default=lambda o: o.__dict__)
-    # save to file
-    with open(file_name, "w", encoding="utf-8") as file:
-        file.write(data_json)
-
-
-def find_path(
-    path_cache: dict[str, Tuple[Node, list[int]]],
-    nodes: dict[str, Node],
-    start_node: Node,
-    node_condition: Callable[[Node], bool],
-) -> Tuple[Optional[Node], list[int]]:
-    # check cache
-    if start_node.outputs in path_cache:
-        (node, path) = path_cache[start_node.outputs]
-        if node_condition(node):
-            return node, path
-
-    queue = deque([(start_node, [])])
-    visited = set()
-
-    while queue:
-        node, path = queue.popleft()
-
-        if node_condition(node):
-            return node, path
-
-        visited.add(node.outputs)
-
-        for inputs, outputs in node.outlinks + [
-            (-(inputs + 1), outputs) for inputs, outputs in node.clock_outlinks
-        ]:
-            child_node = nodes.get(outputs)
-            if child_node and child_node.outputs not in visited:
-                queue.append((child_node, path + [inputs]))
-
-    return None, []
-
-
-class PalAnalyzer:
-    def __init__(self, dupal_board: PalBase):
-        self._dupal_board = dupal_board
+class PalRAnalyzer:
+    def __init__(self, pal: PalBase):
+        self._pal = pal
 
     def _walk_to(self, path: list[int]):
         for inputs in path:
-            if inputs < 0:
-                self._dupal_board.read_outputs(map_inputs(-inputs - 1), clock=True)
-            else:
-                self._dupal_board.read_outputs(map_inputs(inputs))
+            self._pal.read_outputs(inputs, clock=True)
 
-    def analyze(self, output_file_name: str) -> bool:
-        node_count = 0
-        outlink_count = 0
-        nodes: dict[str, Node] = {}
-        path_cache: dict[str, Tuple[Node, list[int]]] = {}
-        possible_inputs = [inputs for inputs in range(2**8)]
-        outputs = bstr8(*self._dupal_board.read_states(0))
-        node, _ = get_or_create_node(nodes, outputs)
-        node_count += 1
+    @staticmethod
+    def _save_states_to_file(nodes: dict[int, Node], file_name: str):
+        data_json = json.dumps(
+            nodes,
+            default=lambda obj: None if isinstance(obj, AddOnceQueue) else obj.__dict__,
+        )
+        # save to file
+        with open(file_name, "w", encoding="utf-8") as file:
+            file.write(data_json)
+
+    def _get_or_create_node(
+        self, nodes: dict[int, Node], state: int
+    ) -> Tuple[Node, bool]:
+        if state not in nodes:
+            new_node = Node(state, outlinks={}, inputs=AddOnceQueue(), mappings={})
+            inputs_queue = AddOnceQueue()
+            for inputs in range(2**8):
+                inputs_queue.add(inputs << 1)
+            while not inputs_queue.empty:
+                inputs = inputs_queue.dequeue()
+                outputs, hi_z_mask = self._pal.read_states(inputs)
+                io_mask = 0b_111_0000_1
+                for io_inputs in bcomb(hi_z_mask & io_mask):
+                    inputs_queue.add(inputs ^ (io_inputs << 10))
+                # output final mapping
+                print(f"New mapping: {bstr18(inputs)} -> {bstr8(outputs, hi_z_mask)}")
+                new_node.mappings[inputs] = bstr8(outputs, hi_z_mask)
+            for inputs in inputs_queue.set:
+                new_node.inputs.add(inputs)
+            nodes[state] = new_node
+            return nodes[state], True
+        return nodes[state], False
+
+    @staticmethod
+    def _find_path(
+        path_cache: dict[int, Tuple[Node, list[int]]],
+        nodes: dict[int, Node],
+        start_node: Node,
+        node_condition: Callable[[Node], bool],
+    ) -> Tuple[Optional[Node], list[int]]:
+        # check cache
+        if start_node.state in path_cache:
+            (node, path) = path_cache[start_node.state]
+            if node_condition(node):
+                return node, path
+        queue: deque[Tuple[Node, list[int]]] = deque([(start_node, [])])
+        visited: set[int] = set()
+        while queue:
+            node, path = queue.popleft()
+            if node_condition(node):
+                return node, path
+            visited.add(node.state)
+            for inputs, outputs in node.outlinks.items():
+                child_node = nodes.get(outputs)
+                if child_node and child_node.state not in visited:
+                    queue.append((child_node, path + [inputs]))
+        return None, []
+
+    def analyze(self, output_file_name: str):
+        nodes: dict[int, Node] = dict[int, Node]()
+        path_cache: dict[int, Tuple[Node, list[int]]] = dict[
+            int, Tuple[Node, list[int]]
+        ]()
+        outlinks_total = 0
+        outlinks_done = 0
+        outputs = self._pal.read_outputs(0, clock=True)
+        state = outputs & 0b_000_1111_0
+        node, _ = self._get_or_create_node(nodes, state)
+        outlinks_total += node.inputs.count
         while True:
             # can we create outlink?
-            if len(node.outlinks) < len(possible_inputs):
-                inputs = possible_inputs[node.next_inputs_idx]
-                outputs = bstr8(*self._dupal_board.read_states(map_inputs(inputs)))
-                node.outlinks.append((inputs, outputs))
-                outlink_count += 1
-                node.next_inputs_idx += 1
-                child_node, node_created = get_or_create_node(nodes, outputs)
-                nodes[outputs] = child_node
-                node_count += 1 if node_created else 0
-                node = nodes[outputs]
-                print(
-                    f"{outlink_count} / {node_count * len(possible_inputs) * 2} ({node_count} states)"
-                )
-            elif len(node.clock_outlinks) < len(
-                possible_inputs
-            ):  # should we trigger clock?
-                inputs = possible_inputs[node.next_clock_inputs_idx]
-                outputs = bstr8(
-                    *self._dupal_board.read_states(map_inputs(inputs), clock=True)
-                )
-                node.clock_outlinks.append((inputs, outputs))
-                outlink_count += 1
-                node.next_clock_inputs_idx += 1
-                child_node, node_created = get_or_create_node(nodes, outputs)
-                nodes[outputs] = child_node
-                node_count += 1 if node_created else 0
-                node = nodes[outputs]
-                print(
-                    f"{outlink_count} / {node_count * len(possible_inputs) * 2} ({node_count} states)"
-                )
+            if not node.inputs.empty:
+                inputs = node.inputs.dequeue()
+                outputs = self._pal.read_outputs(inputs, clock=True)
+                state = outputs & 0b_000_1111_0
+                node.outlinks[inputs] = state
+                outlinks_done += 1
+                child_node, node_created = self._get_or_create_node(nodes, state)
+                outlinks_total += child_node.inputs.count if node_created else 0
+                node = child_node
+                print(f"{outlinks_done} / {outlinks_total} ({len(nodes)} states)")
             else:
                 # can we walk to node that is not yet completely mapped out?
                 start_node = node
                 node, path = (
-                    find_path(
-                        path_cache,
-                        nodes,
-                        start_node,
-                        lambda n: len(n.outlinks) + len(n.clock_outlinks)
-                        < 2 * len(possible_inputs),
+                    self._find_path(
+                        path_cache, nodes, start_node, lambda _node: not _node.inputs.empty
                     )
-                    if outlink_count < node_count * len(possible_inputs) * 2
+                    if outlinks_done < outlinks_total
                     else (None, None)
                 )
-                assert not node or len(node.outlinks) + len(
-                    node.clock_outlinks
-                ) < 2 * len(possible_inputs), "We found a complete node"
+                assert not node or not node.inputs.empty, "We found a complete node"
                 if node:
                     self._walk_to(path)
-                    path_cache[start_node.outputs] = (node, path)
+                    path_cache[start_node.state] = (node, path)
                 else:  # can't find any incomplete node
                     # do we have everything we need?
-                    done = False
-                    if all(
-                        len(node.outlinks) + len(node.clock_outlinks)
-                        == 2 * len(possible_inputs)
-                        for node in nodes.values()
-                    ):
+                    if all(node.inputs.empty for node in nodes.values()):
                         print("We have everything we need.")
-                        done = True
                     else:
                         print(
                             "We don't have everything we need, but we can't do anything more without power-cycling."
                         )
-                    total_outlinks = 0
-                    for node in nodes.values():
-                        total_outlinks += len(node.outlinks) + len(node.clock_outlinks)
-                    print(f"Total outlinks: {total_outlinks}")
-                    save_states_to_file(nodes, output_file_name)
-                    return done
+                    print(f"Total outlinks: {outlinks_total}")
+                    self._save_states_to_file(nodes, output_file_name)
+                    return
+
+    # inputs:  f12 f19 f13 fq14 fq15 fq16 fq17 f18 - i9 i8 i7 i6 i5 i4 i3 i2 -
+    #          F/0 F/0 F/0 F    F    F    F    F/0 0 I  I  I  I  I  I  I  I  0
+    # outputs: io12 io19 io13 q14 q15 q16 q17 io18 - - - - - - - - - -
+    #          T/O  T/O  T/O  Q   Q   Q   Q   T/O  0 0 0 0 0 0 0 0 0 0
+    @staticmethod
+    def convert_file(
+        filename: str,
+        output_filename: str,
+        inputs_mask="FFFFFFFF0IIIIIIII0",
+        outputs_mask="TTTQQQQT0000000000",
+    ):
+        inputs_count = inputs_mask.count("F") + inputs_mask.count("I")
+        outputs_count = (
+            outputs_mask.count("O")
+            + 2 * outputs_mask.count("T")
+            + outputs_mask.count("Q")
+        )
+        input_names = [
+            "f12",
+            "f19",
+            "f13",
+            "fq14",
+            "fq15",
+            "fq16",
+            "fq17",
+            "f18",
+            "",
+            "i9",
+            "i8",
+            "i7",
+            "i6",
+            "i5",
+            "i4",
+            "i3",
+            "i2",
+            "",
+        ]
+        output_names = ["io12", "io19", "io13", "q14", "q15", "q16", "q17", "io18"]
+        output_names_tri_state = [
+            "z12",
+            "z19",
+            "z13",
+            "",
+            "",
+            "",
+            "",
+            "z18",
+        ]
+        inputs_header = [
+            f" {input_name}" if input_char in ["I", "F"] else ""
+            for input_char, input_name in zip(inputs_mask, input_names)
+        ]
+        outputs_header = [
+            f" {output_name}" if output_char in ["O", "T", "Q"] else ""
+            for output_char, output_name in zip(outputs_mask, output_names)
+        ] + [
+            f" {output_name}" if output_char == "T" else ""
+            for output_char, output_name in zip(outputs_mask, output_names_tri_state)
+        ]
+        header = f""".i {inputs_count}
+.o {outputs_count}
+.ilb{"".join(inputs_header)}
+.ob{"".join(outputs_header)}
+.phase {"0" * outputs_count}
+"""
+        rows = {}
+        with open(filename, "r") as file:
+            data: dict[int, dict] = json.load(file)
+        with open(output_filename, "w") as output_file:
+            output_file.write(header + "\n")
+            for _, state in data.items():
+                for inputs, outputs in state["mappings"].items():
+                    inputs_nrm = bstr18(int(inputs)).replace("_", "")
+                    outputs_nrm = outputs.replace("_", "") + "0000000000"
+                    register_inputs_nrm = (
+                        bstr8(state["outlinks"][inputs]).replace("_", "") + "0000000000"
+                    )
+                    row_inputs = ""
+                    for _, (input_char, output_char, input_mask) in enumerate(
+                        zip(inputs_nrm, outputs_nrm, inputs_mask)
+                    ):
+                        if input_mask == "F":
+                            row_inputs += (
+                                input_char if output_char == "Z" else output_char
+                            )
+                        elif input_mask == "I":
+                            row_inputs += input_char
+                    row_outputs = ""
+                    for _, (
+                        input_char,
+                        output_char,
+                        register_char,
+                        output_mask,
+                    ) in enumerate(
+                        zip(inputs_nrm, outputs_nrm, register_inputs_nrm, outputs_mask)
+                    ):
+                        if output_mask in ["O", "T"]:
+                            row_outputs += "-" if output_char == "Z" else output_char
+                        elif output_mask == "Q":
+                            row_outputs += register_char
+                    for _, (output_char, output_mask) in enumerate(
+                        zip(outputs_nrm, outputs_mask)
+                    ):
+                        if output_mask == "T":
+                            row_outputs += "1" if output_char == "Z" else "0"
+                    if row_inputs in rows:
+                        assert rows[row_inputs] == row_outputs
+                    else:
+                        output_file.write(f"{row_inputs} {row_outputs}\n")
+                        rows.update({row_inputs: row_outputs})
+            # fill in the gaps
+            for i in range(2**inputs_count):
+                inputs = format(i, f"0{inputs_count}b")
+                if inputs not in rows:
+                    output_file.write(f"{inputs} {"-" * outputs_count}\n")
+
+
+class PalLAnalyzer:
+    def __init__(self, pal: PalBase):
+        self._pal = pal
+
+    def analyze(
+        self,
+        output_filename: str,
+        stdout_filename: str = None,
+    ):
+        # set I/O mask
+        io_mask = (
+            0b00_111111_0000000000
+            if self._pal.type == PalType.PAL16L8
+            else 0b00_000000_0000000000
+        )
+        with open(output_filename, "w") as output_file:
+            # redirect stdout to the file
+            if stdout_filename:
+                stdout_file = open(stdout_filename, "w")
+                sys.stdout = stdout_file
+            inputs_queue = AddOnceQueue()
+            for i in range(2**10):
+                inputs_queue.add(i)
+            while not inputs_queue.empty:
+                inputs = inputs_queue.dequeue()
+                outputs, hi_z_mask = self._pal.read_states(inputs)
+                hi_z_mask <<= 10
+                outputs <<= 10
+                for io_inputs in bcomb(hi_z_mask & io_mask):
+                    new_inputs = inputs ^ io_inputs
+                    print(f"Candidate for new inputs: {bstr18(new_inputs)}")
+                    if new_inputs not in inputs_queue.set:
+                        print("Enqueuing.")
+                        inputs_queue.add(new_inputs)
+                # output final mapping
+                print(
+                    f"Final mapping: {bstr18(inputs)} -> {bstr18(outputs, hi_z_mask)}"
+                )
+                output_file.write(f"{bstr18(inputs)} -> {bstr18(outputs, hi_z_mask)}\n")
+            # restore stdout
+            if stdout_filename:
+                stdout_file.close()
+                sys.stdout = sys.__stdout__
+
+    @staticmethod
+    def convert_file(
+        filename: str,
+        out_filename: str,
+        pal_type: PalType,
+        inputs_mask=None,  # I - input, F - feedback, 0 - ignore
+        outputs_mask=None,  # O - output, T - tri-state, 0 - ignore
+    ):
+        # set masks
+        inputs_mask = inputs_mask or "00_000000_IIIIIIIIII"
+        outputs_mask = outputs_mask or (
+            "TT_TTTTTT_0000000000"
+            if pal_type == PalType.PAL16L8
+            else "OO_OOOOOO_0000000000"
+        )
+        # set output file header
+        inputs_count = inputs_mask.count("F") + inputs_mask.count("I")
+        outputs_count = outputs_mask.count("O") + 2 * outputs_mask.count("T")
+        input_names = [
+            "",
+            "",
+            "",
+            "f13",
+            "f14",
+            "f15",
+            "f16",
+            "f17",
+            "f18",
+            "",
+            "i11",
+            "i9",
+            "i8",
+            "i7",
+            "i6",
+            "i5",
+            "i4",
+            "i3",
+            "i2",
+            "i1",
+        ]
+        output_names = [
+            "o12",
+            "o19",
+            "",
+            "io13",
+            "io14",
+            "io15",
+            "io16",
+            "io17",
+            "io18",
+        ]
+        output_names_tri_state = [
+            "z12",
+            "z19",
+            "",
+            "z13",
+            "z14",
+            "z15",
+            "z16",
+            "z17",
+            "z18",
+        ]
+        inputs_header = [
+            f" {input_name}" if input_char in ["I", "F"] else ""
+            for input_char, input_name in zip(inputs_mask, input_names)
+        ]
+        outputs_header = [
+            f" {output_name}" if output_char in ["O", "T"] else ""
+            for output_char, output_name in zip(outputs_mask, output_names)
+        ] + [
+            f" {output_name}" if output_char == "T" else ""
+            for output_char, output_name in zip(outputs_mask, output_names_tri_state)
+        ]
+        header = f""".i {inputs_count}
+    .o {outputs_count}
+    .ilb{"".join(inputs_header)}
+    .ob{"".join(outputs_header)}
+    .phase {"0" * outputs_count}
+    """
+        rows = {}
+        with open(out_filename, "w") as output_file:
+            output_file.write(header + "\n")
+            with open(filename, "r") as file:
+                for line in file:
+                    inputs, outputs = line.strip().split(" -> ")
+                    inputs = inputs.replace("_", "")
+                    outputs = outputs.replace("_", "")
+                    row_inputs = ""
+                    for _, (input_char, output_char, input_mask) in enumerate(
+                        zip(inputs, outputs, inputs_mask)
+                    ):
+                        if input_mask == "I":
+                            row_inputs += input_char
+                        elif input_mask == "F":
+                            if output_char == "Z":
+                                row_inputs += input_char
+                            else:
+                                row_inputs += output_char
+                    row_outputs = ""
+                    for _, (input_char, output_char, output_mask) in enumerate(
+                        zip(inputs, outputs, outputs_mask)
+                    ):
+                        if output_mask == "O" or output_mask == "T":
+                            row_outputs += "-" if output_char == "Z" else output_char
+                    for _, (input_char, output_char, output_mask) in enumerate(
+                        zip(inputs, outputs, outputs_mask)
+                    ):
+                        if output_mask == "T":
+                            row_outputs += "1" if output_char == "Z" else "0"
+                    if row_inputs in rows:
+                        assert rows[row_inputs] == row_outputs
+                    else:
+                        rows.update({row_inputs: row_outputs})
+                        output_file.write(f"{row_inputs} {row_outputs}\n")
+                # add missing combinations
+                for i in range(2**inputs_count):
+                    inputs = format(i, f"0{inputs_count}b")
+                    if inputs not in rows:
+                        output_file.write(f"{inputs} {"-" * outputs_count}\n")
