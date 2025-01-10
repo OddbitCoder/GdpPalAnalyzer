@@ -102,7 +102,10 @@ class PalRAnalyzer:
                 start_node = node
                 node, path = (
                     self._find_path(
-                        path_cache, nodes, start_node, lambda _node: not _node.inputs.empty
+                        path_cache,
+                        nodes,
+                        start_node,
+                        lambda _node: not _node.inputs.empty,
                     )
                     if outlinks_done < outlinks_total
                     else (None, None)
@@ -186,7 +189,7 @@ class PalRAnalyzer:
 .o {outputs_count}
 .ilb{"".join(inputs_header)}
 .ob{"".join(outputs_header)}
-.phase {"0" * outputs_count}
+.phase {"1" * outputs_count}
 """
         rows = {}
         with open(filename, "r") as file:
@@ -361,7 +364,7 @@ class PalLAnalyzer:
     .o {outputs_count}
     .ilb{"".join(inputs_header)}
     .ob{"".join(outputs_header)}
-    .phase {"0" * outputs_count}
+    .phase {"1" * outputs_count}
     """
         rows = {}
         with open(out_filename, "w") as output_file:
