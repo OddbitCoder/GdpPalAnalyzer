@@ -296,26 +296,24 @@ class PalLAnalyzer:
         outputs_mask=None,  # O - output, T - tri-state, 0 - ignore
     ):
         # set masks
-        inputs_mask = inputs_mask or "00_000000_IIIIIIIIII"
+        inputs_mask = inputs_mask or "00000000IIIIIIIIII"
         outputs_mask = outputs_mask or (
-            "TT_TTTTTT_0000000000"
+            "TTTTTTTT0000000000"
             if pal_type == PalType.PAL16L8
-            else "OO_OOOOOO_0000000000"
+            else "OOOOOOOO0000000000"
         )
         # set output file header
         inputs_count = inputs_mask.count("F") + inputs_mask.count("I")
         outputs_count = outputs_mask.count("O") + 2 * outputs_mask.count("T")
         input_names = [
-            "",
-            "",
-            "",
+            "f12",
+            "f19",
             "f13",
             "f14",
             "f15",
             "f16",
             "f17",
             "f18",
-            "",
             "i11",
             "i9",
             "i8",
@@ -330,7 +328,6 @@ class PalLAnalyzer:
         output_names = [
             "o12",
             "o19",
-            "",
             "io13",
             "io14",
             "io15",
@@ -341,7 +338,6 @@ class PalLAnalyzer:
         output_names_tri_state = [
             "z12",
             "z19",
-            "",
             "z13",
             "z14",
             "z15",
@@ -361,11 +357,11 @@ class PalLAnalyzer:
             for output_char, output_name in zip(outputs_mask, output_names_tri_state)
         ]
         header = f""".i {inputs_count}
-    .o {outputs_count}
-    .ilb{"".join(inputs_header)}
-    .ob{"".join(outputs_header)}
-    .phase {"1" * outputs_count}
-    """
+.o {outputs_count}
+.ilb{"".join(inputs_header)}
+.ob{"".join(outputs_header)}
+.phase {"1" * outputs_count}
+"""
         rows = {}
         with open(out_filename, "w") as output_file:
             output_file.write(header + "\n")
@@ -397,7 +393,7 @@ class PalLAnalyzer:
                         if output_mask == "T":
                             row_outputs += "1" if output_char == "Z" else "0"
                     if row_inputs in rows:
-                        assert rows[row_inputs] == row_outputs
+                        assert rows[row_inputs] == row_outputs, f"{rows[row_inputs]} != {row_outputs}"
                     else:
                         rows.update({row_inputs: row_outputs})
                         output_file.write(f"{row_inputs} {row_outputs}\n")

@@ -1,7 +1,5 @@
-from audioop import alaw2lin
-
 from analyzer import PalRAnalyzer, PalLAnalyzer
-from pal import DuPalBoard, IC49, IC24, IC22, IC7, IC12
+from pal import DuPalBoard, IC49, IC24, IC22, IC7, IC12, PalType
 
 if __name__ == "__main__":
     # ic49 = IC49()
@@ -9,9 +7,9 @@ if __name__ == "__main__":
     # analyzer = PalRAnalyzer(ic49)
     # analyzer.analyze("C:\\Work\\PalAnalyzer\\reads\\ic49\\ic49_simulated.json")
 
-    analyzer = PalRAnalyzer(IC49())
-    analyzer._pal.read_outputs(0, True)
-    analyzer.analyze("C:\\Work\\PalAnalyzer\\reads\\ic49\\ic49_simulated.txt")
+    # analyzer = PalRAnalyzer(IC49())
+    # analyzer._pal.read_outputs(0, True)
+    # analyzer.analyze("C:\\Work\\PalAnalyzer\\reads\\ic49\\ic49_simulated.txt")
 
     # dupal_board = DuPalBoard(PalType.PAL16L8, port="COM4", delay=0.001)
     # analyzer = PalRAnalyzer(dupal_board)
@@ -27,16 +25,13 @@ if __name__ == "__main__":
     #     f"C:\\Work\\PalAnalyzer\\reads\\ic7_full\\ic7_full_8.txt",
     #     f"C:\\Work\\PalAnalyzer\\reads\\ic7_full\\ic7_full_stdout_8.txt",
     # )
-    # convert_file(
-    #     "C:\\Work\\PalAnalyzer\\reads\\ic7\\ic7.txt",
-    #     "C:\\Work\\PalAnalyzer\\reads\\ic7\\ic7.tbl",
-    #     PalType.PAL16L8,
-    # )
-    # convert_file(
-    #     "C:\\Work\\PalAnalyzer\\reads\\ic7_full\\ic7_full.txt",
-    #     "C:\\Work\\PalAnalyzer\\reads\\ic7_full\\ic7_full.tbl",
-    #     PalType.PAL16L8,
-    # )
+    PalLAnalyzer.convert_file(
+        "C:\\Work\\PalAnalyzer\\reads\\ic7\\ic7.txt",
+        "C:\\Work\\PalAnalyzer\\reads\\ic7\\ic7_hiz.tbl",
+        PalType.PAL16L8,
+        inputs_mask="FFFFFFFFIIIIIIIIII",
+        outputs_mask="TTTTTTTT0000000000"
+    )
     # convert_file(
     #     "C:\\Work\\PalAnalyzer\\reads\\ic22\\ic22.txt",
     #     "C:\\Work\\PalAnalyzer\\reads\\ic22\\ic22.tbl",
