@@ -1,0 +1,64 @@
+Name     gdp_ic7 ;
+PartNo   00 ;
+Date     08/03/2025 ;
+Revision 01 ;
+Designer Miha Grcar ;
+Company  Oddbit Retro ;
+Assembly None ;
+Location  ;
+Device   g16v8a ;
+
+/* *************** INPUT PINS *********************/
+PIN 1   = i1                      ; /* SEL                             */ 
+PIN 2   = i2                      ; /* RES-                            */ 
+PIN 3   = i3                      ; /* A2                              */ 
+PIN 4   = i4                      ; /* A3                              */ 
+PIN 5   = i5                      ; /* A4                              */ 
+PIN 6   = i6                      ; /* RD-                             */ 
+PIN 7   = i7                      ; /* M1-                             */ 
+PIN 8   = i8                      ; /* INT-                            */ 
+PIN 9   = i9                      ; /* IORQ-                           */ 
+PIN 11  = i11                     ; /* NOT CONNECTED                   */ 
+
+/* *************** OUTPUT PINS *********************/
+PIN 12  = o12                     ; /* GDP-                            */ 
+PIN 13  = io13                    ; /* TSC-                            */ 
+PIN 14  = io14                    ; /* MK3881/ENA                      */ 
+PIN 15  = io15                    ; /* BUFFER-                         */ 
+PIN 16  = io16                    ; /* AVDC-                           */ 
+PIN 17  = io17                    ; /* MK3881/M1                       */ 
+PIN 18  = io18                    ; /* DIN-                            */ 
+PIN 19  = o19                     ; /* NOT CONNECTED                   */ 
+
+/* *************** EQ *********************/
+o12 = (i5&!i4&i3) # (i5&!i4&!i3) # (i5&i4) # (!i7) # (i7&!i1) # (i9);
+
+o19 = (i7&i6) # (!i7) # (i7&!i1) # (i9);
+
+io13 = (i8&i6) # (i8&!i1) # (i7&i6) # (i7&!i1) # (i9);
+
+io14 = (i5&!i4&i3) # (i5&i4) # (!i1) # (!i5) # (i9);
+
+io15 = (i5&!i4&!i3) # (i5&i4) # (!i5) # (!i7) # (i7&!i1) # (i9);
+
+io16 = (i5&!i4&i3) # (i5&!i4&!i3) # (!i5) # (!i7) # (i7&!i1) # (i9);
+
+io17 = (i7&i2);
+
+io18 = 'b'0;
+
+o12.OE = 'b'1;
+
+io13.OE = 'b'1;
+
+io14.OE = 'b'1;
+
+io15.OE = 'b'1;
+
+io16.OE = 'b'1;
+
+io17.OE = 'b'1;
+
+io18.OE = !io13;
+
+o19.OE = io13; /* NOT CONNECTED */
