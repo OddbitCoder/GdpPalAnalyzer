@@ -1,0 +1,57 @@
+%SIGNAL
+PIN   1 =  i1 
+PIN   2 =  i2 
+PIN   3 =  i3 
+PIN   4 =  i4 
+PIN   5 =  i5 
+PIN   6 =  i6 
+PIN   7 =  i7 
+PIN   8 =  i8 
+PIN   9 =  i9 
+PIN  11 =  i11 
+PIN  13 =  io13 
+PIN  14 =  io14 
+PIN  15 =  io15 
+PIN  16 =  io16 
+PIN  17 =  io17 
+PIN  18 =  io18 
+PIN  12 =  o12 
+PIN  19 =  o19 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+io13 =>
+    i1 & !i3
+  # i1 & i2
+
+io14 =>
+    i3
+  # !i6
+
+io15 =>
+    !i5
+  # !i6
+
+io16 =>
+    i1
+  # !i11
+
+io17 =>
+    !i2 & i3 & i11
+
+io18 =>
+    i6 & i8
+  # !i6 & i7
+
+o12 =>
+    i2
+  # i3
+
+o19 =>
+    i9
+  # !i11
+
+%END

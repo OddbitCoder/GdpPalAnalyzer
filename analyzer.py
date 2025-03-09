@@ -305,6 +305,7 @@ class PalLAnalyzer:
         # set output file header
         inputs_count = inputs_mask.count("F") + inputs_mask.count("I")
         outputs_count = outputs_mask.count("O") + 2 * outputs_mask.count("T")
+        io_prefix = "i" if pal_type == PalType.PAL16L8 else ""
         input_names = [
             "f12",
             "f19",
@@ -328,12 +329,12 @@ class PalLAnalyzer:
         output_names = [
             "o12",
             "o19",
-            "io13",
-            "io14",
-            "io15",
-            "io16",
-            "io17",
-            "io18",
+            f"{io_prefix}o13",
+            f"{io_prefix}o14",
+            f"{io_prefix}o15",
+            f"{io_prefix}o16",
+            f"{io_prefix}o17",
+            f"{io_prefix}o18",
         ]
         output_names_tri_state = [
             "z12",

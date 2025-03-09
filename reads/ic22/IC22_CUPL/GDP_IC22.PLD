@@ -1,0 +1,52 @@
+Name     gdp_ic22 ;
+PartNo   00 ;
+Date     08/03/2025 ;
+Revision 01 ;
+Designer Miha Grcar ;
+Company  Oddbit Retro ;
+Assembly None ;
+Location  ;
+Device   g16v8a ;
+
+/* *************** INPUT PINS *********************/
+PIN 1   = i1                      ; /*                                 */ 
+PIN 2   = i2                      ; /*                                 */ 
+PIN 3   = i3                      ; /*                                 */ 
+PIN 4   = i4                      ; /*                                 */ 
+PIN 5   = i5                      ; /*                                 */ 
+PIN 6   = i6                      ; /*                                 */ 
+PIN 7   = i7                      ; /*                                 */ 
+PIN 8   = i8                      ; /*                                 */ 
+PIN 9   = i9                      ; /*                                 */ 
+PIN 11  = i11                     ; /*                                 */ 
+
+/* *************** OUTPUT PINS *********************/
+PIN 12  = o12                     ; /*                                 */ 
+PIN 13  = io13                    ; /*                                 */ 
+PIN 14  = io14                    ; /*                                 */ 
+PIN 15  = io15                    ; /*                                 */ 
+PIN 16  = io16                    ; /*                                 */ 
+PIN 17  = io17                    ; /*                                 */ 
+PIN 18  = io18                    ; /*                                 */ 
+PIN 19  = o19                     ; /*                                 */ 
+
+/* *************** EQ *********************/
+o12 = (i2) # (i3);
+
+o19 = (i9) # (!i11);
+
+io13 = (!i3&i1) # (i2&i1);
+
+io14 = (i3) # (!i6);
+
+io15 = (!i5) # (!i6);
+
+io16 = (i1) # (!i11);
+
+io17 = (i11&i3&!i2);
+
+io18 = (i8&i6) # (i7&!i6);
+
+
+
+
