@@ -308,5 +308,6 @@ class DuPalBoard(PalBase):
         print(f"Final HI-Z mask: {bstr18(hi_z_mask)}")
         return outputs >> 10, hi_z_mask >> 10
 
+    @property
     def type(self) -> PalType:
         return self._pal_type
