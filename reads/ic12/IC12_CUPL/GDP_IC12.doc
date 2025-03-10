@@ -1,0 +1,221 @@
+
+*******************************************************************************
+                                   gdp_ic12
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# 60008009
+Device          g16v8ms  Library DLIB-h-40-11
+Created         Mon Mar 10 23:15:06 2025
+Name            gdp_ic12 
+Partno          00 
+Revision        01 
+Date            10/03/2025 
+Designer        Miha Grcar 
+Company         Oddbit Retro 
+Assembly        None 
+Location        
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+io12 =>
+    !i3 & !i5
+  # i3
+  # i4
+
+io13 =>
+    i4 & !i7
+  # i4 & q16
+  # i3 & !i7
+  # i3 & q16
+  # !i5 & q16
+  # !i5 & !i7
+
+io18 =>
+    i3
+  # i6
+  # i4
+  # i5
+
+io19 =>
+    !i3 & !i5
+  # i6
+  # i4
+  # i5
+
+q14.d  =>
+    i2
+
+q15.d  =>
+    !q14
+  # i2
+
+q16.d  =>
+    !i3 & !i5 & !i8
+  # !i5 & !i7
+  # i3 & !i8
+  # i6
+  # i5
+
+q17.d  =>
+    !i3 & !i5 & i8
+  # i3 & i8
+  # i5
+
+io12.oe  =>
+    1 
+
+io13.oe  =>
+    1 
+
+io18.oe  =>
+    1 
+
+io19.oe  =>
+    1 
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+    clk                         1        V        -       -       -     
+    i2                          2        V        -       -       -     
+    i3                          3        V        -       -       -     
+    i4                          4        V        -       -       -     
+    i5                          5        V        -       -       -     
+    i6                          6        V        -       -       -     
+    i7                          7        V        -       -       -     
+    i8                          8        V        -       -       -     
+    i9                          9        V        -       -       -     
+    io12                        12       V        3       7       1     
+    io13                        13       V        6       7       1     
+    io18                        18       V        4       7       1     
+    io19                        19       V        4       7       1     
+    oe                          11       V        -       -       -     
+    q14                         14       V        -       -       -     
+    q14                 d       14       X        1       8       1     
+    q15                         15       V        -       -       -     
+    q15                 d       15       X        2       8       1     
+    q16                         16       V        -       -       -     
+    q16                 d       16       X        5       8       1     
+    q17                         17       V        -       -       -     
+    q17                 d       17       X        3       8       1     
+    io12                oe      12       D        1       1       0     
+    io13                oe      13       D        1       1       0     
+    io18                oe      18       D        1       1       0     
+    io19                oe      19       D        1       1       0     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+
+
+===============================================================================
+                                   Fuse Plot
+===============================================================================
+
+Syn   02192 x Ac0   02193 - 
+
+Pin #19  02048  Pol -  02120  Ac1 - 
+ 00000 -------------------------------- 
+ 00032 -----x-------x------------------ 
+ 00064 ----------------x--------------- 
+ 00096 --------x----------------------- 
+ 00128 ------------x------------------- 
+ 00160 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00192 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00224 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #18  02049  Pol -  02121  Ac1 - 
+ 00256 -------------------------------- 
+ 00288 ----x--------------------------- 
+ 00320 ----------------x--------------- 
+ 00352 --------x----------------------- 
+ 00384 ------------x------------------- 
+ 00416 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00448 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00480 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #17  02050  Pol -  02122  Ac1 x 
+ 00512 -----x-------x----------x------- 
+ 00544 ----x-------------------x------- 
+ 00576 ------------x------------------- 
+ 00608 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00640 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00672 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00704 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00736 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #16  02051  Pol -  02123  Ac1 x 
+ 00768 -----x-------x-----------x------ 
+ 00800 -------------x-------x---------- 
+ 00832 ----x--------------------x------ 
+ 00864 ----------------x--------------- 
+ 00896 ------------x------------------- 
+ 00928 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00960 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00992 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #15  02052  Pol -  02124  Ac1 x 
+ 01024 -----------------------x-------- 
+ 01056 x------------------------------- 
+ 01088 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01120 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01152 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01184 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01216 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01248 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #14  02053  Pol -  02125  Ac1 x 
+ 01280 x------------------------------- 
+ 01312 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01344 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01376 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01408 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01440 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01472 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01504 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #13  02054  Pol -  02126  Ac1 - 
+ 01536 -------------------------------- 
+ 01568 --------x------------x---------- 
+ 01600 --------x-----x----------------- 
+ 01632 ----x----------------x---------- 
+ 01664 ----x---------x----------------- 
+ 01696 -------------xx----------------- 
+ 01728 -------------x-------x---------- 
+ 01760 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #12  02055  Pol -  02127  Ac1 - 
+ 01792 -------------------------------- 
+ 01824 -----x-------x------------------ 
+ 01856 ----x--------------------------- 
+ 01888 --------x----------------------- 
+ 01920 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01952 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01984 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 02016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+
+
+LEGEND    X : fuse not blown 
+          - : fuse blown 
+
+===============================================================================
+                                 Chip Diagram
+===============================================================================
+
+                               ______________
+                              |   gdp_ic12   |
+                      clk x---|1           20|---x Vcc                      
+                       i2 x---|2           19|---x io19                     
+                       i3 x---|3           18|---x io18                     
+                       i4 x---|4           17|---x q17                      
+                       i5 x---|5           16|---x q16                      
+                       i6 x---|6           15|---x q15                      
+                       i7 x---|7           14|---x q14                      
+                       i8 x---|8           13|---x io13                     
+                       i9 x---|9           12|---x io12                     
+                      GND x---|10          11|---x oe                       
+                              |______________|
+

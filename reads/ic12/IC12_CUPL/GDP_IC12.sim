@@ -1,0 +1,82 @@
+%SIGNAL
+PIN   1 =  clk 
+PIN   2 =  i2 
+PIN   3 =  i3 
+PIN   4 =  i4 
+PIN   5 =  i5 
+PIN   6 =  i6 
+PIN   7 =  i7 
+PIN   8 =  i8 
+PIN   9 =  i9 
+PIN  12 =  io12 
+PIN  13 =  io13 
+PIN  18 =  io18 
+PIN  19 =  io19 
+PIN  11 =  oe 
+PIN  14 =  q14 
+PIN  15 =  q15 
+PIN  16 =  q16 
+PIN  17 =  q17 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+io12 =>
+    !i3 & !i5
+  # i3
+  # i4
+
+io13 =>
+    i4 & !i7
+  # i4 & q16
+  # i3 & !i7
+  # i3 & q16
+  # !i5 & q16
+  # !i5 & !i7
+
+io18 =>
+    i3
+  # i6
+  # i4
+  # i5
+
+io19 =>
+    !i3 & !i5
+  # i6
+  # i4
+  # i5
+
+q14.d  =>
+    i2
+
+q15.d  =>
+    !q14
+  # i2
+
+q16.d  =>
+    !i3 & !i5 & !i8
+  # !i5 & !i7
+  # i3 & !i8
+  # i6
+  # i5
+
+q17.d  =>
+    !i3 & !i5 & i8
+  # i3 & i8
+  # i5
+
+io12.oe  =>
+    1 
+
+io13.oe  =>
+    1 
+
+io18.oe  =>
+    1 
+
+io19.oe  =>
+    1 
+
+%END
