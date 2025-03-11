@@ -1,7 +1,7 @@
 .i 10
 .o 8
 .ilb i11 i9 i8 i7 i6 i5 i4 i3 i2 i1
-.ob o12 o19 io13 io14 io15 io16 io17 io18
+.ob o12 o19 o13 o14 o15 o16 o17 o18
 .phase 11111111
 
 0000000000 11111011

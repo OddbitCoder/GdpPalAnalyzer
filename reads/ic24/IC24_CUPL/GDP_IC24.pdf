@@ -5,7 +5,7 @@
   {Program "CUPL(WM) Version 5.0a"}
   {DBtype "Schematic"}
   {DBvrev 1.01}
-  {DBtime "Sat Mar 08 22:21:30 2025 "}
+  {DBtime "Tue Mar 11 13:03:32 2025 "}
   {DBunit "MIL"}
   {DBgrid 10}
   {Lyrstr "WIRES" 1 "BUS" 1 "GATE" 2 "IEEE" 2 "PINFUN" 3 "PINNUM" 1 
@@ -44,12 +44,12 @@
    {P I9 {Pt "INPUT"}{Lq 0}{Ploc 100 40}}
    {P I11 {Pt "INPUT"}{Lq 0}{Ploc 100 20}}
    {P O12 {Pt "I/O"}{Lq 0}{Ploc 280 20}}
-   {P IO13 {Pt "I/O"}{Lq 0}{Ploc 280 40}}
-   {P IO14 {Pt "I/O"}{Lq 0}{Ploc 280 60}}
-   {P IO15 {Pt "I/O"}{Lq 0}{Ploc 280 80}}
-   {P IO16 {Pt "I/O"}{Lq 0}{Ploc 280 100}}
-   {P IO17 {Pt "I/O"}{Lq 0}{Ploc 280 120}}
-   {P IO18 {Pt "I/O"}{Lq 0}{Ploc 280 140}}
+   {P O13 {Pt "I/O"}{Lq 0}{Ploc 280 40}}
+   {P O14 {Pt "I/O"}{Lq 0}{Ploc 280 60}}
+   {P O15 {Pt "I/O"}{Lq 0}{Ploc 280 80}}
+   {P O16 {Pt "I/O"}{Lq 0}{Ploc 280 100}}
+   {P O17 {Pt "I/O"}{Lq 0}{Ploc 280 120}}
+   {P O18 {Pt "I/O"}{Lq 0}{Ploc 280 140}}
    {P O19 {Pt "I/O"}{Lq 0}{Ploc 280 160}}
   }
 
@@ -119,12 +119,12 @@
    {T "I11" 140 20}
    [Tj "RC"]
    {T "O12" 240 20}
-   {T "IO13" 240 40}
-   {T "IO14" 240 60}
-   {T "IO15" 240 80}
-   {T "IO16" 240 100}
-   {T "IO17" 240 120}
-   {T "IO18" 240 140}
+   {T "O13" 240 40}
+   {T "O14" 240 60}
+   {T "O15" 240 80}
+   {T "O16" 240 100}
+   {T "O17" 240 120}
+   {T "O18" 240 140}
    {T "O19" 240 160}
    [Ly "DEVICE"]
    [Tj "CT"]
@@ -171,17 +171,17 @@
    }
    {N O12
    }
-   {N IO13
+   {N O13
    }
-   {N IO14
+   {N O14
    }
-   {N IO15
+   {N O15
    }
-   {N IO16
+   {N O16
    }
-   {N IO17
+   {N O17
    }
-   {N IO18
+   {N O18
    }
    {N O19
    }

@@ -1,7 +1,7 @@
 
 CUPL(WM)        5.0a  Serial# 60008009
 Device          g16v8as  Library DLIB-h-40-2
-Created         Sat Mar 08 22:21:30 2025
+Created         Tue Mar 11 13:03:32 2025
 Name            gdp_ic24 
 Partno          00 
 Revision        01 
@@ -30,4 +30,4 @@ Location
 *L02144 11111111111111111111111111111111
 *L02176 111111111111111110
 *C347D
-*C5D0
+*C5D2

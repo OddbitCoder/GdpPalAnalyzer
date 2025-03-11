@@ -9,13 +9,13 @@ PIN   7 =  i7
 PIN   8 =  i8 
 PIN   9 =  i9 
 PIN  11 =  i11 
-PIN  13 =  io13 
-PIN  14 =  io14 
-PIN  15 =  io15 
-PIN  16 =  io16 
-PIN  17 =  io17 
-PIN  18 =  io18 
 PIN  12 =  o12 
+PIN  13 =  o13 
+PIN  14 =  o14 
+PIN  15 =  o15 
+PIN  16 =  o16 
+PIN  17 =  o17 
+PIN  18 =  o18 
 PIN  19 =  o19 
 %END
 
@@ -23,29 +23,29 @@ PIN  19 =  o19
 %END
 
 %EQUATION
-io13 =>
-    !i2
-  # i1
-
-io14 =>
-    !i1
-
-io15 =>
-    !i3 & !i4
-
-io16 =>
-    !i5 & i6
-  # i7
-
-io17 =>
-    1 
-
-io18 =>
-    1 
-
 o12 =>
     !i2
   # !i1
+
+o13 =>
+    !i2
+  # i1
+
+o14 =>
+    !i1
+
+o15 =>
+    !i3 & !i4
+
+o16 =>
+    !i5 & i6
+  # i7
+
+o17 =>
+    1 
+
+o18 =>
+    1 
 
 o19 =>
     1 
