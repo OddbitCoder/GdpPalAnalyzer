@@ -11,3 +11,11 @@ class Node:
     inputs: AddOnceQueue
 
     mappings: dict[int, str]
+
+
+@dataclass
+class NodeExt:
+    state: str
+
+    inputs: AddOnceQueue
+    outlinks: dict[int, str]
