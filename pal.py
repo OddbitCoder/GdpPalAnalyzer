@@ -18,6 +18,9 @@ class PalBase:
     def read_states(self, inputs: int, clock: bool = False) -> Tuple[int, int]:
         raise NotImplementedError
 
+    def force_state(self, state: int):
+        raise NotImplementedError
+
     @property
     def type(self) -> PalType:
         raise NotImplementedError
@@ -30,12 +33,18 @@ class IC49(PalBase):
         self.fq16 = 1
         self.fq17 = 1
 
+    def force_state(self, state: int):
+        self.fq14 = (state >> 3) & 1
+        self.fq15 = (state >> 2) & 1
+        self.fq16 = (state >> 1) & 1
+        self.fq17 = (state >> 0) & 1
+
     def read_outputs(self, inputs: int, clock: bool = False) -> int:
         outputs, _ = self.read_states(inputs, clock)
         return outputs
 
     def read_states(self, inputs: int, clock: bool = False) -> Tuple[int, int]:
-        f12, _, f13, _, _, _, _, f18, i11, i9, i8, i7, i6, i5, i4, i3, i2, i1 = list(
+        f12, _, f13, _, _, _, _, f18, _, i9, i8, i7, i6, i5, i4, i3, i2, _ = list(
             map(int, bstr18(inputs).replace("_", ""))
         )
         q14 = int((not self.fq15) or f12)
@@ -77,12 +86,18 @@ class IC12(PalBase):
         self.fq16 = 1
         self.fq17 = 1
 
+    def force_state(self, state: int):
+        self.fq14 = (state >> 3) & 1
+        self.fq15 = (state >> 2) & 1
+        self.fq16 = (state >> 1) & 1
+        self.fq17 = (state >> 0) & 1
+
     def read_outputs(self, inputs: int, clock: bool = False) -> int:
         outputs, _ = self.read_states(inputs, clock)
         return outputs
 
     def read_states(self, inputs: int, clock: bool = False) -> Tuple[int, int]:
-        _, _, _, _, _, _, _, _, i11, i9, i8, i7, i6, i5, i4, i3, i2, i1 = list(
+        _, _, _, _, _, _, _, _, _, i9, i8, i7, i6, i5, i4, i3, i2, _ = list(
             map(int, bstr18(inputs).replace("_", ""))
         )
         q14 = i2
@@ -283,29 +298,29 @@ class DuPalBoard(PalBase):
 
     def read_states(self, inputs: int, clock: bool = False) -> Tuple[int, int]:
         outputs = self.read_outputs(inputs, clock) << 10
-        print(f"{bstr18(inputs)} -> {bstr18(outputs)}")
+        # print(f"{bstr18(inputs)} -> {bstr18(outputs)}")
         # determine hi-z mask
         hi_z_mask = 0
         io_mask = 0b111111110000000000
         hi_z_test_pins = bcpl18(inputs ^ outputs) & io_mask
         if hi_z_test_pins:
-            print(f"HI-Z candidates: {bstr18(hi_z_test_pins)}")
+            # print(f"HI-Z candidates: {bstr18(hi_z_test_pins)}")
             for i in range(10, 18):
                 if hi_z_test_pins & (1 << i):
-                    print(f"Bit {i} is ON")
+                    # print(f"Bit {i} is ON")
                     bit_from_inputs = (inputs >> i) & 1
                     new_inputs = (
                         inputs | (1 << i)
                         if not bit_from_inputs
                         else inputs & bcpl18(1 << i)
                     )
-                    print(f"New inputs:  {bstr18(new_inputs)}")
+                    # print(f"New inputs:  {bstr18(new_inputs)}")
                     new_outputs = self.read_outputs(new_inputs) << 10
-                    print(f"New outputs: {bstr18(new_outputs)}")
+                    # print(f"New outputs: {bstr18(new_outputs)}")
                     hi_z_mask |= (new_outputs ^ outputs) & io_mask
                     # reset
                     assert outputs == self.read_outputs(inputs) << 10
-        print(f"Final HI-Z mask: {bstr18(hi_z_mask)}")
+        # print(f"Final HI-Z mask: {bstr18(hi_z_mask)}")
         return outputs >> 10, hi_z_mask >> 10
 
     @property

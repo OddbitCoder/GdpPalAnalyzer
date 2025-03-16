@@ -7,10 +7,12 @@ class AddOnceQueue:
         self.queue: Queue[int] = Queue()
         self.set: set[int] = set()
 
-    def add(self, item: int):
+    def add(self, item: int) -> int:
         if not item in self.set:
             self.set.add(item)
             self.queue.put(item)
+            return 1
+        return 0
 
     def dequeue(self) -> int | None:
         if not self.queue.empty():

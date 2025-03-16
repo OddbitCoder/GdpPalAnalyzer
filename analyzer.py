@@ -136,7 +136,7 @@ class PalRAnalyzer:
         output_filename: str,
         inputs_mask="FFFFFFFF0IIIIIIII0",
         outputs_mask="TTTQQQQT0000000000",
-        inv_hi_z=False
+        inv_hi_z=False,
     ):
         inputs_count = inputs_mask.count("F") + inputs_mask.count("I")
         outputs_count = (
@@ -398,7 +398,9 @@ class PalLAnalyzer:
                         if output_mask == "T":
                             row_outputs += "1" if output_char == "Z" else "0"
                     if row_inputs in rows:
-                        assert rows[row_inputs] == row_outputs, f"{rows[row_inputs]} != {row_outputs}"
+                        assert (
+                            rows[row_inputs] == row_outputs
+                        ), f"{rows[row_inputs]} != {row_outputs}"
                     else:
                         rows.update({row_inputs: row_outputs})
                         output_file.write(f"{row_inputs} {row_outputs}\n")
