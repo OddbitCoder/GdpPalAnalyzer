@@ -1,0 +1,48 @@
+Name     gdp_ic49 ;
+PartNo   00 ;
+Date     09/03/2025 ;
+Revision 01 ;
+Designer Miha Grcar ;
+Company  Oddbit Retro ;
+Assembly None ;
+Location  ;
+Device   g16v8a ;
+
+/* *************** INPUT PINS *********************/
+PIN 1   = clk                     ;
+PIN 2   = i2                      ; /*                                 */ 
+PIN 3   = i3                      ; /*                                 */ 
+PIN 4   = i4                      ; /*                                 */ 
+PIN 5   = i5                      ; /*                                 */ 
+PIN 6   = i6                      ; /*                                 */ 
+PIN 7   = i7                      ; /*                                 */ 
+PIN 8   = i8                      ; /*                                 */ 
+PIN 9   = i9                      ; /*                                 */ 
+PIN 11  = oe                      ;
+PIN 12  = io12                    ; /*                                 */ 
+PIN 13  = io13                    ; /*                                 */ 
+
+/* *************** OUTPUT PINS *********************/
+PIN 14  = q14                     ; /*                                 */ 
+PIN 15  = q15                     ; /* NOT CONNECTED                   */ 
+PIN 16  = q16                     ; /* NOT CONNECTED                   */ 
+PIN 17  = q17                     ; /*                                 */ 
+PIN 18  = io18                    ; /*                                 */ 
+PIN 19  = io19                    ; /*                                 */ 
+
+/* *************** EQ *********************/
+io19 = (i4&i3) # (q16&!i4);
+
+q14.D = (!q15) # (io12);
+
+q15.D = (io12);
+
+q16.D = (i3);
+
+q17.D = (i2);
+
+io18 = (!i7&!i5&!i4) # (!i8&i5&!i4) # (!i6&i4);
+
+io18.OE = (i9&!i4);
+
+io19.OE = 'b'1;
