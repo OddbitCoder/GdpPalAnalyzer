@@ -18,13 +18,31 @@ class PalRAnalyzer:
 
     @staticmethod
     def _save_states_to_file(nodes: dict[int, Node], file_name: str):
+        nodes_sorted = dict(sorted(nodes.items()))
+        for node in nodes.values():
+            node.mappings = dict(sorted(node.mappings.items()))
+            node.outlinks = dict(sorted(node.outlinks.items()))
         data_json = json.dumps(
-            nodes,
+            nodes_sorted,
             default=lambda obj: None if isinstance(obj, AddOnceQueue) else obj.__dict__,
         )
         # save to file
         with open(file_name, "w", encoding="utf-8") as file:
             file.write(data_json)
+
+    @staticmethod
+    def reorganize_saved_data(file_name: str, new_file_name: str):
+        with open(file_name, "r") as file:
+            data = json.load(file)
+        nodes = dict()
+        for k, v in data.items():
+            nodes[int(k)] = Node(
+                mappings={int(kk): vv for kk, vv in v["mappings"].items()},
+                outlinks={int(kk): vv for kk, vv in v["outlinks"].items()},
+                state=v["state"],
+                inputs=AddOnceQueue(),
+            )
+        PalRAnalyzer._save_states_to_file(nodes, new_file_name)
 
     def _get_or_create_node(
         self, nodes: dict[int, Node], state: int
