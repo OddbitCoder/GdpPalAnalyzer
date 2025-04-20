@@ -1,7 +1,9 @@
 from enum import Enum
 
+from analyzer_ext import PalRAnalyzerExt
 from analyzer import PalRAnalyzer, PalLAnalyzer
 from pal import DuPalBoard, IC49, IC24, IC22, IC7, IC12, PalType
+
 
 class Mode(Enum):
     # 10L8
@@ -25,9 +27,10 @@ class Mode(Enum):
     CONVERT_IC49 = 14
     VALIDATE_IC49 = 15
 
-port = "COM3"
-delay = 0.001
-mode = Mode.VALIDATE_IC49
+
+port = "COM4"
+delay = 0.0001
+mode = Mode.CONVERT_IC49
 path = "C:\\Work\\PalAnalyzer\\reads"
 
 if __name__ == "__main__":
@@ -43,7 +46,7 @@ if __name__ == "__main__":
         PalLAnalyzer.convert_file(
             f"{path}\\ic24\\ic24.txt",
             f"{path}\\ic24\\ic24.tbl",
-            pal_type=PalType.PAL10L8
+            pal_type=PalType.PAL10L8,
         )
 
     if mode == Mode.VALIDATE_IC24:
@@ -51,7 +54,7 @@ if __name__ == "__main__":
         analyzer = PalLAnalyzer(ic24)
         analyzer.analyze(
             f"{path}\\ic24\\ic24_simulated.txt",
-            f"{path}\\ic24\\ic24_simulated_stdout.txt"
+            f"{path}\\ic24\\ic24_simulated_stdout.txt",
         )
 
     if mode == Mode.READ_IC22:
@@ -66,7 +69,7 @@ if __name__ == "__main__":
         PalLAnalyzer.convert_file(
             f"{path}\\ic22\\ic22.txt",
             f"{path}\\ic22\\ic22.tbl",
-            pal_type=PalType.PAL16L8
+            pal_type=PalType.PAL16L8,
         )
 
     if mode == Mode.VALIDATE_IC22:
@@ -74,7 +77,7 @@ if __name__ == "__main__":
         analyzer = PalLAnalyzer(ic22)
         analyzer.analyze(
             f"{path}\\ic22\\ic22_simulated.txt",
-            f"{path}\\ic22\\ic22_simulated_stdout.txt"
+            f"{path}\\ic22\\ic22_simulated_stdout.txt",
         )
 
     if mode == Mode.READ_IC7:
@@ -87,22 +90,19 @@ if __name__ == "__main__":
 
     if mode == Mode.CONVERT_IC7:
         PalLAnalyzer.convert_file(
-            f"{path}\\ic7\\ic7.txt",
-            f"{path}\\ic7\\ic7.tbl",
-            pal_type=PalType.PAL16L8
+            f"{path}\\ic7\\ic7.txt", f"{path}\\ic7\\ic7.tbl", pal_type=PalType.PAL16L8
         )
 
     if mode == Mode.VALIDATE_IC7:
         ic7 = IC7()
         analyzer = PalLAnalyzer(ic7)
         analyzer.analyze(
-            f"{path}\\ic7\\ic7_simulated.txt",
-            f"{path}\\ic7\\ic7_simulated_stdout.txt"
+            f"{path}\\ic7\\ic7_simulated.txt", f"{path}\\ic7\\ic7_simulated_stdout.txt"
         )
 
     if mode == Mode.READ_IC12:
         dupal_board = DuPalBoard(PalType.PAL16R4, port, delay)
-        analyzer = PalRAnalyzer(dupal_board)
+        analyzer = PalRAnalyzerExt(dupal_board)
         analyzer.analyze(f"{path}\\ic12\\ic12.json")
 
     if mode == Mode.CONVERT_IC12:
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             f"{path}\\ic12\\ic12.json",
             f"{path}\\ic12\\ic12.tbl",
             inputs_mask="000FFFF00IIIIIIII0",
-            outputs_mask="OOOQQQQO0000000000"
+            outputs_mask="OOOQQQQO0000000000",
         )
 
     if mode == Mode.VALIDATE_IC12:
@@ -121,14 +121,15 @@ if __name__ == "__main__":
 
     if mode == Mode.READ_IC49:
         dupal_board = DuPalBoard(PalType.PAL16R4, port, delay)
-        analyzer = PalRAnalyzer(dupal_board)
-        analyzer.analyze(f"{path}\\ic49\\ic49.json")
+        analyzer = PalRAnalyzerExt(dupal_board)
+        analyzer.analyze(f"{path}\\ic49\\ic49_ext.json")
 
     if mode == Mode.CONVERT_IC49:
         PalRAnalyzer.convert_file(
             f"{path}\\ic49\\ic49.json",
             f"{path}\\ic49\\ic49.tbl",
-            inputs_mask="F0FFFFF00IIIIIIII0" # pins 12 and 13 are inputs
+            inputs_mask="F0FFFFF00IIIIIIII0",  # pins 12 and 13 are inputs
+            inv_hi_z=True
         )
 
     if mode == Mode.VALIDATE_IC49:

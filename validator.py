@@ -1,5 +1,4 @@
 import random
-import sys
 from enum import Enum
 
 from pal import IC49, DuPalBoard, PalType, PalBase, IC12
@@ -25,7 +24,7 @@ if __name__ == "__main__":
     else:
         raise Exception("Invalid mode")
     dupal_board = DuPalBoard(PalType.PAL16R4, port, delay)
-    # test
+    # run side by side
     while True:
         random_inputs = random.randint(0, 2**17 - 1) << 1
         random_inputs &= 0b111000010111111110

@@ -17,7 +17,7 @@ class PalRAnalyzer:
             self._pal.read_outputs(inputs, clock=True)
 
     @staticmethod
-    def _save_states_to_file(nodes: dict[int, Node], file_name: str):
+    def save_states_to_file(nodes: dict[int, Node], file_name: str):
         nodes_sorted = dict(sorted(nodes.items()))
         for node in nodes.values():
             node.mappings = dict(sorted(node.mappings.items()))
@@ -31,10 +31,10 @@ class PalRAnalyzer:
             file.write(data_json)
 
     @staticmethod
-    def reorganize_saved_data(file_name: str, new_file_name: str):
+    def load_data(file_name: str) -> dict[int, Node]:
         with open(file_name, "r") as file:
             data = json.load(file)
-        nodes = dict()
+        nodes = dict[int, Node]()
         for k, v in data.items():
             nodes[int(k)] = Node(
                 mappings={int(kk): vv for kk, vv in v["mappings"].items()},
@@ -42,7 +42,12 @@ class PalRAnalyzer:
                 state=v["state"],
                 inputs=AddOnceQueue(),
             )
-        PalRAnalyzer._save_states_to_file(nodes, new_file_name)
+        return nodes
+
+    @staticmethod
+    def resave_data(file_name: str, new_file_name: str):
+        nodes = PalRAnalyzer.load_data(file_name)
+        PalRAnalyzer.save_states_to_file(nodes, new_file_name)
 
     def _get_or_create_node(
         self, nodes: dict[int, Node], state: int
@@ -141,7 +146,7 @@ class PalRAnalyzer:
                             "We don't have everything we need, but we can't do anything more without power-cycling."
                         )
                     print(f"Total outlinks: {outlinks_total}")
-                    self._save_states_to_file(nodes, output_file_name)
+                    self.save_states_to_file(nodes, output_file_name)
                     return
 
     # inputs:  f12 f19 f13 fq14 fq15 fq16 fq17 f18 - i9 i8 i7 i6 i5 i4 i3 i2 -

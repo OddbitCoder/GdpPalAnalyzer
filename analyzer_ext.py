@@ -110,7 +110,7 @@ class PalRAnalyzerExt:
                     and outlinks == reg_data[state].outlinks
                 )
         if reg_file_name:
-            PalRAnalyzer._save_states_to_file(reg_data, reg_file_name)
+            PalRAnalyzer.save_states_to_file(reg_data, reg_file_name)
         if simple_states:
             print(
                 "The outputs seem to be INDEPENDENT of implicit combinatorial feedbacks."
