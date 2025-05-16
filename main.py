@@ -24,11 +24,12 @@ class Mode(Enum):
     VALIDATE_IC12 = 12
     # 16R4 + HI-Z
     READ_IC49 = 13
-    CONVERT_IC49 = 14
-    VALIDATE_IC49 = 15
+    READ_IC49_EXT = 14
+    CONVERT_IC49 = 15
+    VALIDATE_IC49 = 16
 
 
-port = "COM4"
+port = "COM5"
 delay = 0.0001
 mode = Mode.CONVERT_IC49
 path = "C:\\Work\\PalAnalyzer\\reads"
@@ -119,17 +120,22 @@ if __name__ == "__main__":
         analyzer = PalRAnalyzer(ic12)
         analyzer.analyze(f"{path}\\ic12\\ic12_simulated.json")
 
-    if mode == Mode.READ_IC49:
+    if mode == Mode.READ_IC49_EXT:
         dupal_board = DuPalBoard(PalType.PAL16R4, port, delay)
         analyzer = PalRAnalyzerExt(dupal_board)
         analyzer.analyze(f"{path}\\ic49\\ic49_ext.json")
+
+    if mode == Mode.READ_IC49:
+        dupal_board = DuPalBoard(PalType.PAL16R4, port, delay)
+        analyzer = PalRAnalyzer(dupal_board)
+        analyzer.analyze(f"{path}\\ic49\\ic49.json")
 
     if mode == Mode.CONVERT_IC49:
         PalRAnalyzer.convert_file(
             f"{path}\\ic49\\ic49.json",
             f"{path}\\ic49\\ic49.tbl",
             inputs_mask="F0FFFFF00IIIIIIII0",  # pins 12 and 13 are inputs
-            inv_hi_z=True
+            inv_hi_z=False
         )
 
     if mode == Mode.VALIDATE_IC49:

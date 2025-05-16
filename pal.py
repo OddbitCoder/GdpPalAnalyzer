@@ -306,18 +306,20 @@ class DuPalBoard(PalBase):
         if hi_z_test_pins:
             # print(f"HI-Z candidates: {bstr18(hi_z_test_pins)}")
             for i in range(10, 18):
-                if hi_z_test_pins & (1 << i):
+                pin_to_test = 1 << i
+                if hi_z_test_pins & pin_to_test:
                     # print(f"Bit {i} is ON")
                     bit_from_inputs = (inputs >> i) & 1
                     new_inputs = (
-                        inputs | (1 << i)
+                        inputs | pin_to_test
                         if not bit_from_inputs
-                        else inputs & bcpl18(1 << i)
+                        else inputs & bcpl18(pin_to_test)
                     )
                     # print(f"New inputs:  {bstr18(new_inputs)}")
                     new_outputs = self.read_outputs(new_inputs) << 10
                     # print(f"New outputs: {bstr18(new_outputs)}")
-                    hi_z_mask |= (new_outputs ^ outputs) & io_mask
+                    # hi_z_mask |= (new_outputs ^ outputs) & io_mask # BUG !!!!!
+                    hi_z_mask |= bcpl18(new_inputs ^ new_outputs) & pin_to_test
                     # reset
                     assert outputs == self.read_outputs(inputs) << 10
         # print(f"Final HI-Z mask: {bstr18(hi_z_mask)}")
