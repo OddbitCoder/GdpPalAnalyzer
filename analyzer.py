@@ -44,11 +44,6 @@ class PalRAnalyzer:
             )
         return nodes
 
-    @staticmethod
-    def resave_data(file_name: str, new_file_name: str):
-        nodes = PalRAnalyzer.load_data(file_name)
-        PalRAnalyzer.save_states_to_file(nodes, new_file_name)
-
     def _get_or_create_node(
         self, nodes: dict[int, Node], state: int
     ) -> Tuple[Node, bool]:
