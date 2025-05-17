@@ -44,7 +44,7 @@ class IC49(PalBase):
         return outputs
 
     def read_states(self, inputs: int, clock: bool = False) -> Tuple[int, int]:
-        f12, _, f13, _, _, _, _, f18, _, i9, i8, i7, i6, i5, i4, i3, i2, _ = list(
+        f12, _, f13, _, _, _, _, _, _, i9, i8, i7, i6, i5, i4, i3, i2, _ = list(
             map(int, bstr18(inputs).replace("_", ""))
         )
         q14 = int((not self.fq15) or f12)
@@ -55,11 +55,11 @@ class IC49(PalBase):
             self.fq14, self.fq15, self.fq16, self.fq17 = q14, q15, q16, q17
         o19 = int((i4 and i3) or (self.fq16 and not i4))
         o18 = int(
-            (not i7 and not i5 and not i4)
-            or (not i8 and i5 and not i4)
+            (not i9 and not i7 and not i5 and not i4)
+            or (not i9 and not i8 and i5 and not i4)
+            or (not f13 and i9 and not i4)
             or (not i6 and i4)
         )
-        z18 = int((i9 and not i4))
         outputs_str = "".join(
             map(
                 str,
@@ -71,11 +71,11 @@ class IC49(PalBase):
                     self.fq15,
                     self.fq16,
                     self.fq17,
-                    o18 if not z18 else f18,
+                    o18,
                 ],
             )
         )
-        hi_z_str = "".join(map(str, [1, 0, 1, 0, 0, 0, 0, z18]))
+        hi_z_str = "".join(map(str, [1, 0, 1, 0, 0, 0, 0, 0]))
         return int(outputs_str, 2), int(hi_z_str, 2)
 
 

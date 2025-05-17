@@ -32,7 +32,7 @@ class Mode(Enum):
 
 port = "COM4"
 delay = 0.0001
-mode = Mode.CONVERT_IC12
+mode = Mode.VALIDATE_IC49
 path = "C:\\Work\\PalAnalyzer\\reads"
 
 if __name__ == "__main__":
