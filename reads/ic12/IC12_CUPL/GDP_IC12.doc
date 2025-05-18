@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# 60008009
 Device          g16v8ms  Library DLIB-h-40-11
-Created         Tue Mar 11 13:51:53 2025
+Created         Sun May 18 11:19:52 2025
 Name            gdp_ic12 
 Partno          00 
 Revision        01 
@@ -84,7 +84,6 @@ Pin Variable                                    Pterms   Max     Min
 Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
 --- --------            ---     ---     ----    ------  ------  -----   
 
-    clk                         1        V        -       -       -     
     i2                          2        V        -       -       -     
     i3                          3        V        -       -       -     
     i4                          4        V        -       -       -     
@@ -97,7 +96,6 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
     io13                        13       V        6       7       1     
     io18                        18       V        4       7       1     
     io19                        19       V        4       7       1     
-    oe                          11       V        -       -       -     
     q14                         14       V        -       -       -     
     q14                 d       14       X        1       8       1     
     q15                         15       V        -       -       -     
@@ -207,7 +205,7 @@ LEGEND    X : fuse not blown
 
                                ______________
                               |   gdp_ic12   |
-                      clk x---|1           20|---x Vcc                      
+                          x---|1           20|---x Vcc                      
                        i2 x---|2           19|---x io19                     
                        i3 x---|3           18|---x io18                     
                        i4 x---|4           17|---x q17                      
@@ -216,6 +214,6 @@ LEGEND    X : fuse not blown
                        i7 x---|7           14|---x q14                      
                        i8 x---|8           13|---x io13                     
                        i9 x---|9           12|---x io12                     
-                      GND x---|10          11|---x oe                       
+                      GND x---|10          11|---x                          
                               |______________|
 

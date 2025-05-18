@@ -18,7 +18,7 @@ PIN 6   = i6                      ; /* RD-                             */
 PIN 7   = i7                      ; /* M1-                             */ 
 PIN 8   = i8                      ; /* INT-                            */ 
 PIN 9   = i9                      ; /* IORQ-                           */ 
-PIN 11  = i11                     ; /* NOT CONNECTED                   */ 
+PIN 11  = i11                     ; /* not connected                   */ 
 
 /* *************** OUTPUT PINS *********************/
 PIN 12  = o12                     ; /* GDP-                            */ 
@@ -28,7 +28,7 @@ PIN 15  = io15                    ; /* BUFFER-                         */
 PIN 16  = io16                    ; /* AVDC-                           */ 
 PIN 17  = io17                    ; /* MK3881/M1                       */ 
 PIN 18  = io18                    ; /* DIN-                            */ 
-PIN 19  = o19                     ; /* NOT CONNECTED                   */ 
+PIN 19  = o19                     ; /* not connected                   */ 
 
 /* *************** EQ *********************/
 o12 = (i5&!i4&i3) # (i5&!i4&!i3) # (i5&i4) # (!i7) # (i7&!i1) # (i9);
@@ -46,18 +46,6 @@ io16 = (i5&!i4&i3) # (i5&!i4&!i3) # (!i5) # (!i7) # (i7&!i1) # (i9);
 io17 = (i7&i2);
 
 io18 = 'b'0;
-
-o12.OE = 'b'1;
-
-io13.OE = 'b'1;
-
-io14.OE = 'b'1;
-
-io15.OE = 'b'1;
-
-io16.OE = 'b'1;
-
-io17.OE = 'b'1;
 
 io18.OE = !io13;
 

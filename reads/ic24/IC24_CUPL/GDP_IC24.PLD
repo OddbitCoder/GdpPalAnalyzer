@@ -9,26 +9,26 @@ Location  ;
 Device   g16v8a ;
 
 /* *************** INPUT PINS *********************/
-PIN 1   = i1                      ; /*                                 */ 
-PIN 2   = i2                      ; /*                                 */ 
-PIN 3   = i3                      ; /*                                 */ 
-PIN 4   = i4                      ; /*                                 */ 
-PIN 5   = i5                      ; /*                                 */ 
-PIN 6   = i6                      ; /*                                 */ 
-PIN 7   = i7                      ; /*                                 */ 
-PIN 8   = i8                      ; /*                                 */ 
-PIN 9   = i9                      ; /*                                 */ 
-PIN 11  = i11                     ; /*                                 */ 
+PIN 1   = i1                      ; /* EF9367/ALL                      */ 
+PIN 2   = i2                      ; /* MUX1                            */ 
+PIN 3   = i3                      ; /* DOUT1                           */ 
+PIN 4   = i4                      ; /* DOUT2                           */ 
+PIN 5   = i5                      ; /* DOUT                            */ 
+PIN 6   = i6                      ; /* XORM                            */ 
+PIN 7   = i7                      ; /* EF9367/DIN                      */ 
+PIN 8   = i8                      ; /* high                            */ 
+PIN 9   = i9                      ; /* high                            */ 
+PIN 11  = i11                     ; /* high                            */ 
 
 /* *************** OUTPUT PINS *********************/
-PIN 12  = o12                     ; /*                                 */ 
-PIN 13  = o13                     ; /*                                 */ 
-PIN 14  = o14                     ; /*                                 */ 
-PIN 15  = o15                     ; /*                                 */ 
-PIN 16  = o16                     ; /*                                 */ 
-PIN 17  = o17                     ; /*                                 */ 
-PIN 18  = o18                     ; /*                                 */ 
-PIN 19  = o19                     ; /*                                 */ 
+PIN 12  = o12                     ; /* SHIFT-                          */ 
+PIN 13  = o13                     ; /* NORM-                           */ 
+PIN 14  = o14                     ; /* ALL1                            */ 
+PIN 15  = o15                     ; /* DOUT                            */ 
+PIN 16  = o16                     ; /* DINX-                           */ 
+PIN 17  = o17                     ; /* not connected                   */ 
+PIN 18  = o18                     ; /* not connected                   */ 
+PIN 19  = o19                     ; /* not connected                   */ 
 
 /* *************** EQ *********************/
 o12 = (!i2) # (!i1);

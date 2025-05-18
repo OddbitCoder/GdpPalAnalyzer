@@ -9,26 +9,24 @@ Location  ;
 Device   g16v8a ;
 
 /* *************** INPUT PINS *********************/
-PIN 1   = clk                     ;
-PIN 2   = i2                      ; /*                                 */ 
-PIN 3   = i3                      ; /*                                 */ 
-PIN 4   = i4                      ; /*                                 */ 
-PIN 5   = i5                      ; /*                                 */ 
-PIN 6   = i6                      ; /*                                 */ 
-PIN 7   = i7                      ; /*                                 */ 
-PIN 8   = i8                      ; /*                                 */ 
-PIN 9   = i9                      ; /*                                 */ 
-PIN 11  = oe                      ;
+PIN 2   = i2                      ; /* AVINT-                          */ 
+PIN 3   = i3                      ; /* DA11                            */ 
+PIN 4   = i4                      ; /* DA12                            */ 
+PIN 5   = i5                      ; /* DA13                            */ 
+PIN 6   = i6                      ; /* BCE-                            */ 
+PIN 7   = i7                      ; /* WDB-                            */ 
+PIN 8   = i8                      ; /* ATTD2                           */ 
+PIN 9   = i9                      ; /* high                            */ 
 
 /* *************** OUTPUT PINS *********************/ 
-PIN 12  = io12                    ; /*                                 */ 
-PIN 13  = io13                    ; /*                                 */ 
-PIN 14  = q14                     ; /*                                 */ 
-PIN 15  = q15                     ; /*                                 */ 
-PIN 16  = q16                     ; /*                                 */ 
-PIN 17  = q17                     ; /*                                 */ 
-PIN 18  = io18                    ; /*                                 */ 
-PIN 19  = io19                    ; /*                                 */ 
+PIN 12  = io12                    ; /* LDEN-                           */ 
+PIN 13  = io13                    ; /* CRAM-                           */ 
+PIN 14  = q14                     ; /* not connected                   */ 
+PIN 15  = q15                     ; /* AVDINT-                         */ 
+PIN 16  = q16                     ; /* CRAMEN-                         */ 
+PIN 17  = q17                     ; /* CROM-                           */ 
+PIN 18  = io18                    ; /* CLR-                            */ 
+PIN 19  = io19                    ; /* CHR-                            */ 
 
 /* *************** EQ *********************/
 io12 = (i8&!i5&!i3) # (!i8&!i5&!i3) # (i8&i3) # (!i8&i3) # (i4);
